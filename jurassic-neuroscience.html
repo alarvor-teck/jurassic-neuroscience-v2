@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jurassic Learning — Neurociencia del Aprendizaje</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;600&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+:root{--bg:#0a1a0a;--accent:#4CAF50;--danger:#ff4444;--gold:#ffc107;--text:#e8f5e9;--card:rgba(0,30,0,.88);--border:#4CAF50;--mono:'Courier New',Consolas,monospace}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Exo 2',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+h1,h2,h3,h4,.title-font{font-family:'Rajdhani',sans-serif;letter-spacing:.04em}
+#bg-stack{position:fixed;inset:0;z-index:0;overflow:hidden}
+.bg-layer{position:absolute;inset:-5%;background-size:cover;background-position:center;opacity:0;transition:opacity 1.2s ease;will-change:opacity,transform}
+.bg-layer.active{opacity:1}
+.bg-layer img{width:100%;height:100%;object-fit:cover;loading:lazy}
+.bg-overlay{position:fixed;inset:0;z-index:1;background:rgba(0,10,0,.55);pointer-events:none}
+#foliage-svg{position:fixed;inset:0;z-index:2;pointer-events:none;opacity:.25}
+#fog-layer{position:fixed;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.fog-particle{position:absolute;width:120px;height:40px;background:radial-gradient(ellipse,rgba(255,255,255,.12),transparent);border-radius:50%;animation:fogDrift linear infinite;opacity:.5}
+@keyframes fogDrift{0%{transform:translateX(-150px)}100%{transform:translateX(calc(100vw + 150px))}}
+#zone-effects{position:fixed;inset:0;z-index:4;pointer-events:none}
+#rain-layer{display:none;position:absolute;inset:0}
+#rain-layer.active{display:block}
+.rain-drop{position:absolute;width:2px;height:18px;background:linear-gradient(transparent,rgba(174,194,224,.6));animation:rainFall linear infinite}
+@keyframes rainFall{to{transform:translateY(110vh)}}
+#lightning-flash{display:none;position:absolute;inset:0;background:rgba(255,255,255,.15)}
+#lightning-flash.active{display:block;animation:flash .15s ease}
+@keyframes flash{0%,100%{opacity:0}50%{opacity:1}}
+#water-gradient{display:none;position:absolute;bottom:0;left:0;right:0;height:35%;background:linear-gradient(transparent,rgba(30,80,120,.35))}
+#water-gradient.active{display:block}
+#login-screen{position:fixed;inset:0;z-index:10000;background:#000 url('img/zona1-laboratorio.png') center/cover no-repeat;display:flex;align-items:center;justify-content:center;padding:24px}
+#login-screen::before{content:'';position:absolute;inset:0;background:rgba(0,0,0,.72)}
+#login-screen.hidden{display:none}
+.login-card{position:relative;z-index:1;width:100%;max-width:480px;background:rgba(0,18,0,.92);border:1px solid rgba(74,222,74,.3);border-radius:16px;padding:48px 40px}
+.login-brand{font-family:var(--mono);font-size:12px;color:#4ade80;letter-spacing:.12em;margin-bottom:20px}
+.login-title{font-size:28px;font-weight:700;color:#e8f5e9;margin-bottom:8px}
+.login-subtitle{font-size:14px;color:#6aaa6a;margin-bottom:32px}
+.login-field{margin-bottom:20px;position:relative}
+.login-field label{display:block;font-size:12px;color:#6aaa6a;margin-bottom:8px;font-family:var(--mono)}
+.login-field input{width:100%;height:48px;background:rgba(0,30,0,.8);border:1px solid #2a6b2a;border-radius:8px;color:#e8f5e9;font-family:var(--mono);font-size:16px;padding:0 40px 0 16px;outline:none}
+.login-field input:focus{border-color:#4ade80}
+.login-field input.valid{border-color:#4ade80}
+.login-field input.invalid{border-color:#ff4444}
+.login-check{position:absolute;right:14px;bottom:14px;color:#4ade80;font-size:18px;display:none}
+.login-field input.valid~.login-check{display:block}
+.login-error{font-size:12px;color:#ff4444;margin-top:6px;min-height:18px;font-family:var(--mono)}
+.login-submit{width:100%;height:52px;margin-top:8px;background:#1a6b1a;border:1px solid #4ade80;border-radius:8px;color:#fff;font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:600;cursor:pointer}
+.login-submit:disabled{opacity:.35;cursor:not-allowed}
+#welcome-panel{position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;padding:24px}
+#welcome-panel.show{display:flex}
+.welcome-card{max-width:520px;width:100%;background:rgba(0,18,0,.92);border:1px solid rgba(74,222,74,.3);border-radius:16px;padding:40px;text-align:center}
+.welcome-card h2{color:#e8f5e9;font-size:24px;margin-bottom:24px}
+.welcome-stats{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.welcome-stat{background:rgba(0,40,0,.6);border:1px solid #2a6b2a;border-radius:8px;padding:16px}
+.welcome-stat span{display:block;font-size:11px;color:#6aaa6a;margin-bottom:6px;font-family:var(--mono)}
+.welcome-stat strong{font-size:22px;color:#ffc107}
+#offline-banner{position:fixed;bottom:0;left:0;right:0;z-index:9998;background:rgba(180,120,0,.92);color:#fff;text-align:center;padding:10px 16px;font-size:13px;font-family:var(--mono);display:none}
+#offline-banner.show{display:block}
+body.pre-login header,body.pre-login main,body.pre-login #dino-threat,body.pre-login #footprint{visibility:hidden;pointer-events:none}
+#lb-modal{position:fixed;inset:0;z-index:2100;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;padding:1rem}
+#lb-modal.open{display:flex}
+.lb-modal-content{max-width:720px;width:100%;background:rgba(0,12,0,.96);border:1px solid #2a6b2a;border-radius:16px;padding:32px;position:relative;max-height:90vh;overflow-y:auto}
+.lb-modal-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px;padding-right:36px}
+.lb-modal-header h3{font-family:var(--mono);color:#ffc107;font-size:1.1rem;margin-bottom:6px}
+.lb-modal-header p{font-family:var(--mono);font-size:11px;color:rgba(76,175,80,.75)}
+.lb-refresh{background:none;border:1px solid #4ade80;color:#4ade80;border-radius:6px;padding:6px 10px;cursor:pointer;font-size:16px}
+.lb-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:13px}
+.lb-table th,.lb-table td{padding:10px 8px;border:1px solid rgba(74,222,74,.25);text-align:center}
+.lb-table th{background:rgba(0,60,0,.5);color:#ffc107}
+.lb-table tr.lb-you td{background:rgba(0,60,0,.4);border:1px solid #4ade80}
+.lb-status{text-align:center;padding:24px;color:#6aaa6a;font-family:var(--mono)}
+.lb-your-row{margin-top:16px;padding:12px;background:rgba(0,40,0,.5);border:1px solid #2a6b2a;border-radius:8px;font-family:var(--mono);font-size:13px;text-align:center}
+#audio-fallback{position:fixed;top:70px;left:50%;transform:translateX(-50%);z-index:10001;background:#3e2723;color:#ffc107;padding:.5rem 1rem;border-radius:4px;font-size:.85rem;display:none;border:1px solid var(--gold)}
+@keyframes fadeIn{to{opacity:1}}
+header{position:fixed;top:0;left:0;right:0;z-index:1000;max-height:88px;display:grid;grid-template-rows:32px 56px;background:rgba(0,15,0,.85);backdrop-filter:blur(8px);border-bottom:1px solid #1a5c1a;padding:0 24px;font-family:var(--mono)}
+.header-row-top{display:flex;align-items:center;justify-content:space-between;height:32px}
+.header-row-main{display:flex;align-items:center;gap:16px;height:56px}
+.logo{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.header-location{font-size:11px;color:rgba(76,175,80,.75);letter-spacing:.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.header-survival{border-right:1px solid rgba(74,222,74,.2);padding-right:16px;margin-right:4px;flex-shrink:0}
+.survival-label{display:block;font-size:10px;color:rgba(232,245,233,.55);letter-spacing:.08em;margin-bottom:2px}
+.survival-points{display:block;font-size:22px;color:#ffc107;font-weight:700;line-height:1}
+.header-zone-progress{flex:1;display:flex;align-items:center;justify-content:center;min-width:0;padding:0 8px}
+.zone-progress-track{display:flex;align-items:center}
+.zone-dot-wrap{position:relative;display:flex;align-items:center}
+.zone-dot{width:12px;height:12px;border-radius:50%;background:#2a2a2a;border:2px solid #444;flex-shrink:0;cursor:default}
+.zone-dot.done{background:#4CAF50;border-color:#4ade4a}
+.zone-dot.active{background:#ffc107;border-color:#ffc107;box-shadow:0 0 10px rgba(255,193,7,.55)}
+.zone-dot.pending{background:#2a2a2a;border-color:#444}
+.zone-connector{width:36px;height:2px;background:#333;flex-shrink:0}
+.zone-connector.done{background:#4CAF50}
+.zone-dot-wrap .zone-tip{visibility:hidden;opacity:0;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);background:rgba(0,20,0,.95);border:1px solid rgba(74,222,74,.35);color:#e8f5e9;font-size:10px;padding:4px 8px;border-radius:4px;white-space:nowrap;pointer-events:none;transition:opacity .15s;z-index:10}
+.zone-dot-wrap:hover .zone-tip{visibility:visible;opacity:1}
+.header-controls{display:flex;align-items:center;gap:16px;flex-shrink:0}
+.audio-ctrl{display:flex;align-items:center;gap:8px}
+.audio-ctrl input[type=range]{width:120px;max-width:120px;accent-color:var(--accent)}
+.hud-item{background:var(--card);border:1px solid var(--border);padding:.3rem .65rem;border-radius:2px;letter-spacing:.05em}
+.hud-item.gold{color:var(--gold);font-weight:600}
+.btn{background:linear-gradient(135deg,#2e7d32,var(--accent));color:#fff;border:none;padding:.5rem 1rem;border-radius:4px;cursor:pointer;font-family:'Rajdhani',sans-serif;font-weight:600;font-size:.95rem;transition:transform .2s,box-shadow .2s;text-decoration:none;display:inline-flex;align-items:center;gap:.4rem}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(76,175,80,.4)}
+.btn-outline{background:transparent;border:2px solid var(--accent);color:var(--accent)}
+.btn-danger{background:linear-gradient(135deg,#c62828,var(--danger))}
+.btn-sm{padding:.35rem .7rem;font-size:.85rem}
+main{position:relative;z-index:10;padding-top:88px;max-width:1100px;margin:0 auto;padding-bottom:3rem}
+.zone{display:none;padding:1.5rem;animation:zoneIn .6s ease}
+.zone.active{display:block}
+.zone.phase-a .timer-wrap,.zone.phase-a .challenge{display:none!important}
+@keyframes zoneIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
+.zone-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin-bottom:1.5rem;padding-bottom:1rem;border-bottom:1px solid rgba(76,175,80,.3)}
+.zone-title{font-size:clamp(1.5rem,4vw,2.2rem);color:var(--accent)}
+.timer-wrap{flex:1;min-width:200px;max-width:400px}
+.timer-label{display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:.3rem;font-family:var(--mono)}
+.timer-bar{height:10px;background:rgba(255,255,255,.1);border-radius:5px;overflow:hidden}
+.timer-fill{height:100%;width:100%;background:var(--accent);transition:width 1s linear,background .5s}
+.timer-fill.warn{background:var(--gold)}.timer-fill.danger{background:var(--danger)}
+#dino-threat{position:fixed;bottom:0;right:0;z-index:500;pointer-events:none;transition:transform .8s ease,opacity .5s,width .8s;opacity:0;transform:scale(.3) translateX(30%)}
+#dino-threat.visible{opacity:1}
+#dino-threat img,#dino-threat svg{height:100px;width:auto;max-width:none;filter:drop-shadow(0 0 20px rgba(255,68,68,.5));mix-blend-mode:multiply;transition:height .8s ease,opacity .5s}
+#dino-threat.capture-mode img,#dino-threat.capture-mode svg{height:60vh;width:auto}
+body.micro-shake{animation:screenShake .1s ease}
+body.capture-shake{animation:captureShake .9s ease-in-out}
+@keyframes screenShake{0%,100%{transform:translateX(0)}25%{transform:translateX(3px)}75%{transform:translateX(-3px)}}
+@keyframes captureShake{0%,100%{transform:translate(0,0)}10%{transform:translate(-14px,8px) rotate(-1.2deg)}20%{transform:translate(14px,-8px) rotate(1.2deg)}30%{transform:translate(-11px,6px) rotate(-0.8deg)}40%{transform:translate(11px,-6px) rotate(0.8deg)}50%{transform:translate(-8px,4px)}60%{transform:translate(8px,-4px)}70%{transform:translate(-5px,2px)}80%{transform:translate(5px,-2px)}90%{transform:translate(-2px,1px)}}
+#footprint{position:fixed;bottom:20px;left:30px;z-index:501;font-size:2rem;opacity:.4;pointer-events:none}
+#footprint.shake{animation:fpShake .6s ease}
+@keyframes fpShake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg) translateX(-4px)}75%{transform:rotate(8deg) translateX(4px)}}
+.card{background:rgba(0,18,0,.82);backdrop-filter:blur(12px);border:1px solid rgba(74,222,74,.25);border-radius:16px;padding:36px 40px;margin:0 auto 1.5rem;max-width:760px;box-shadow:0 4px 20px rgba(0,0,0,.4);overflow:visible}
+.card-body{padding:0}
+.zone-badge{display:inline-block;font-family:var(--mono);font-size:10px;letter-spacing:.14em;color:var(--accent);border:1px solid rgba(74,222,74,.35);background:rgba(74,222,74,.08);padding:4px 12px;border-radius:20px;margin-bottom:14px}
+.card h3{color:var(--gold);font-size:1.3rem;margin-bottom:.5rem}
+.card .narrative-title{font-family:'Rajdhani',sans-serif;font-size:1.15rem;color:var(--accent);margin-bottom:.3rem;font-weight:600}
+.card .subtitle{color:rgba(232,245,233,.75);font-size:.9rem;margin-bottom:1rem;font-style:italic}
+.card p{line-height:1.7;margin-bottom:1rem;font-size:.95rem}
+.citation{font-style:italic;font-size:.85rem;color:rgba(232,245,233,.7);border-left:3px solid var(--gold);padding-left:.8rem;margin:1rem 0}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem;margin:1rem 0}
+.chip{background:rgba(76,175,80,.2);border:1px solid var(--accent);padding:.25rem .7rem;border-radius:20px;font-size:.8rem;color:var(--accent);display:inline-flex;align-items:center;gap:.35rem}
+.resource-btns{display:flex;flex-wrap:wrap;gap:.8rem;margin-top:1rem}
+.resource-btn{background:rgba(255,193,7,.15);border:1px solid var(--gold);color:var(--gold);padding:.5rem 1rem;border-radius:4px;text-decoration:none;font-size:.9rem;transition:background .2s}
+.resource-btn:hover{background:rgba(255,193,7,.3)}
+.phase-btn-wrap{text-align:center;margin:1.5rem 0}
+.challenge{display:none}
+#journey-screen{position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:2rem;font-family:var(--mono)}
+#journey-screen.show{display:flex}
+#journey-text{font-size:clamp(1rem,3vw,1.4rem);color:var(--accent);max-width:700px;text-align:center;line-height:1.8;min-height:3em}
+#journey-skip{margin-top:1.5rem;font-size:.85rem;color:var(--gold);cursor:pointer;text-decoration:underline}
+#challenge-modal{position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,.98);z-index:9999;display:none;flex-direction:column;font-family:var(--mono);pointer-events:auto;overflow:hidden}
+#challenge-modal.open{display:flex}
+body.challenge-modal-open{overflow:hidden}
+.penalty-banner-fixed{position:fixed;top:68px;left:0;width:100%;height:48px;z-index:10002;background:rgba(180,0,0,.95);border-bottom:1px solid #ff4444;display:none;align-items:center;justify-content:center;gap:16px;pointer-events:none}
+.penalty-banner-fixed.show{display:flex;animation:penaltySlide 2s ease forwards}
+.penalty-banner-fixed .penalty-main{font-size:18px;font-weight:700;color:#fff}
+.penalty-banner-fixed .penalty-sub{font-size:13px;color:#ffaaaa}
+@keyframes penaltySlide{0%{transform:translateY(-100%);opacity:0}10%{transform:translateY(0);opacity:1}85%{transform:translateY(0);opacity:1}100%{transform:translateY(-100%);opacity:0}}
+.cm-header{position:fixed;top:0;left:0;right:0;height:64px;background:rgba(0,20,0,.99);border-bottom:1px solid #2a6b2a;z-index:10001;display:flex;align-items:center;padding:0 32px}
+.cm-header-blocks{display:flex;align-items:stretch;width:100%}
+.cm-block{flex:1;display:flex;flex-direction:column;justify-content:center;padding:8px 16px;border-right:1px solid #1a4a1a;min-width:0}
+.cm-block-last{border-right:none}
+.cm-label{font-size:10px;color:#4a8a4a;letter-spacing:.06em;text-transform:uppercase;margin-bottom:4px}
+.cm-value{font-size:18px;font-weight:700;color:#e8f5e9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cm-value.penalty-ok{color:#4ade80}
+.cm-value.penalty-warn{color:#ffc107}
+.cm-value.penalty-danger{color:#ff4444}
+.cm-value.cm-points{color:#ffc107}
+.cm-value.timer-ok{color:#4ade80}
+.cm-value.timer-warn{color:#ffc107}
+.cm-value.timer-danger{color:#ff4444;animation:pulse .5s infinite}
+.cm-time-bar{position:fixed;top:64px;left:0;right:0;height:4px;z-index:10001;background:rgba(255,255,255,.08)}
+.cm-time-fill{height:100%;width:100%;transition:width 1s linear,background .3s}
+.cm-time-fill.timer-ok{background:#4ade80}
+.cm-time-fill.timer-warn{background:#ffc107}
+.cm-time-fill.timer-danger{background:#ff4444}
+.cm-body{position:fixed;top:68px;left:0;right:0;bottom:96px;overflow-y:auto;overflow-x:hidden;padding:40px 48px;background:rgba(0,5,0,.98);z-index:10000;transition:opacity .3s ease}
+.cm-body.cm-fade-out{opacity:0}
+.cm-body.cm-fade-in{animation:cmFadeIn .3s ease}
+@keyframes cmFadeIn{from{opacity:0}to{opacity:1}}
+.cm-puzzle-progress{position:fixed;bottom:72px;left:0;right:0;z-index:10001;text-align:center;font-size:12px;color:#6aaa6a;padding:6px 32px;background:rgba(0,5,0,.95);min-height:22px}
+.cm-footer{position:fixed;bottom:0;left:0;right:0;height:72px;background:rgba(0,15,0,.99);border-top:1px solid #1a4a1a;z-index:10001;display:flex;align-items:center;justify-content:space-between;padding:0 32px}
+.cm-threat{font-size:11px;color:#4a8a4a}
+.cm-footer-status{font-size:12px;color:#6aaa6a}
+.cm-verify-btn{background:#1a6b1a;border:1px solid #4ade80;color:#fff;padding:12px 28px;border-radius:6px;font-family:var(--mono);font-size:14px;cursor:pointer;display:inline-block;flex-shrink:0}
+.cm-verify-btn:disabled{opacity:.35;cursor:not-allowed}
+.cm-verify-btn:not(:disabled):hover{background:#2a8b2a}
+.cm-next-btn{background:#1a6b1a;border:1px solid #4ade80;color:#fff;padding:12px 28px;border-radius:6px;font-family:var(--mono);font-size:14px;cursor:pointer;display:inline-block;white-space:nowrap;flex-shrink:0}
+.cm-next-btn:hover{background:#2a8b2a}
+.cm-footer-right{display:flex;align-items:center;gap:16px;margin-left:auto}
+.quiz-wrap{max-width:700px;margin:0 auto}
+.question-text{font-size:22px;font-family:var(--mono);color:#e8f5e9;margin-bottom:32px;line-height:1.5}
+.options-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.options-grid.options-cols-1{grid-template-columns:1fr}
+.option-btn{height:68px;background:rgba(0,40,0,.7);border:1px solid #2a6b2a;border-radius:8px;color:#e8f5e9;font-size:16px;font-family:var(--mono);cursor:pointer;padding:0 20px;text-align:left;transition:all .15s;display:flex;align-items:center}
+.option-btn:hover:not(:disabled):not(.disabled){background:rgba(0,90,0,.9);border-color:#4ade80;transform:translateX(4px)}
+.option-btn.correct{background:rgba(0,110,0,.95);border:2px solid #4ade80;color:#fff}
+.option-btn.incorrect{background:rgba(110,0,0,.95);border:2px solid #ff4444;color:#fff;animation:shake .4s ease}
+.option-btn.disabled,.option-btn:disabled{pointer-events:none;opacity:.85;cursor:default}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.puzzle-instruction{font-size:22px;font-family:var(--mono);color:#e8f5e9;margin-bottom:24px;line-height:1.5}
+.puzzle-dd-wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:800px;margin:0 auto;width:100%}
+.drop-zones,.drag-terms{min-width:0}
+.dd-target-wrap{margin-bottom:12px}
+.dd-label{font-size:10px;color:#4a8a4a;margin-bottom:4px}
+.drop-zone{min-height:60px;border:2px dashed #2a6b2a;border-radius:6px;background:rgba(0,25,0,.6);margin-bottom:0;padding:0 16px;display:flex;align-items:center;font-family:var(--mono);font-size:14px;color:#6aaa6a}
+.drop-zone.filled{border-style:solid;border-color:#3a8a3a;color:#e8f5e9}
+.drop-zone.correct-slot{border-color:#4ade80;background:rgba(0,60,0,.4)}
+.drop-zone.wrong-slot{border-color:#ff4444;background:rgba(60,0,0,.3)}
+.drop-zone.slot-error{border-color:#ff4444!important}
+.dd-def-text{font-size:12px;color:#6aaa6a;margin-top:4px;margin-bottom:12px;line-height:1.3}
+.drag-term{height:60px;background:rgba(0,60,0,.85);border:1px solid #3a8a3a;border-radius:6px;margin-bottom:12px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:15px;color:#e8f5e9;cursor:grab;user-select:none}
+.drag-term.dragging{opacity:.5;cursor:grabbing;transform:scale(1.05)}
+.drag-term.piece-shake{animation:shake .4s ease}
+.drag-terms-col-hidden{display:none!important}
+.puzzle-sort-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:760px;margin:0 auto;width:100%}
+.puzzle-sort-main{grid-column:1/-1;max-width:560px;margin:0 auto;width:100%}
+.sort-list{display:flex;flex-direction:column;gap:10px}
+.sort-item{height:52px;background:rgba(0,60,0,.8);border:1px solid #3a8a3a;border-radius:6px;display:flex;align-items:center;gap:10px;padding:0 16px;font-size:15px;cursor:grab}
+.sort-item::before{content:'⠿';color:#4a8a4a;margin-right:4px}
+.sort-item.piece-shake{animation:optShake .4s ease}
+.sort-item.sort-wrong{border-color:#ff4444;background:rgba(60,0,0,.5)}
+.sort-item.sort-correct{border-color:#4ade80;background:rgba(0,60,0,.5)}
+.sort-arrows{display:flex;flex-direction:column;gap:2px;margin-left:auto}
+.sort-arrows button{background:rgba(76,175,80,.2);border:1px solid var(--accent);color:var(--text);cursor:pointer;padding:2px 6px;font-size:.7rem;line-height:1}
+.puzzle-panel-inner{max-width:960px;margin:0 auto;width:100%}
+.puzzle-panel-inner h4{display:none}
+.cm-body [data-check-dd],.cm-body [data-check-sort],.cm-body [data-check-classify]{display:none!important}
+@keyframes optShake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.feedback{margin-top:.8rem;padding:.7rem;border-radius:4px;font-size:.9rem;display:none}
+.feedback.show{display:block}
+.feedback.ok{background:rgba(76,175,80,.2);border:1px solid var(--accent)}
+.feedback.bad{background:rgba(255,68,68,.2);border:1px solid var(--danger)}
+.match-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem;position:relative;max-width:900px;margin:0 auto}
+.match-col{display:grid;gap:.5rem}
+.match-node{padding:.6rem;border-radius:6px;cursor:pointer;border:2px solid rgba(255,255,255,.2);background:rgba(0,30,0,.6);font-size:.85rem;transition:all .2s;min-height:44px;display:flex;align-items:center}
+.match-node.selected{border-color:var(--gold);box-shadow:0 0 10px rgba(255,193,7,.4)}
+.match-node.matched{border-color:var(--accent);background:rgba(76,175,80,.2);pointer-events:none}
+.match-canvas-el{position:absolute;inset:0;pointer-events:none;width:100%;height:100%}
+.classify-cols{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:900px;margin:0 auto}
+.classify-col{min-height:160px;background:rgba(0,20,0,.5);border:2px dashed rgba(255,255,255,.2);border-radius:8px;padding:.8rem}
+.classify-col h5{text-align:center;margin-bottom:.6rem;font-size:.95rem}
+.classify-col.science{border-color:var(--accent)}
+.classify-col.myth{border-color:var(--danger)}
+.classify-pool{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem;min-height:52px;padding:.5rem;background:rgba(0,0,0,.3);border-radius:6px}
+.classify-col .dd-item.classify-correct{border-color:#4ade80;background:rgba(0,60,0,.6)}
+.classify-col .dd-item.classify-wrong{border-color:#ff4444;background:rgba(60,0,0,.5)}
+#capture-attempt{font-family:var(--mono);color:var(--gold);margin:.5rem 0;font-size:.95rem}
+#capture-tip{font-size:.9rem;color:rgba(232,245,233,.75);font-style:italic;margin-bottom:1rem;max-width:480px}
+#capture-overlay{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.92);display:none;align-items:center;justify-content:center;flex-direction:column;padding:2rem;text-align:center}
+#capture-overlay.show{display:flex}
+#capture-title{font-family:var(--mono);font-size:clamp(1.8rem,5vw,3rem);color:var(--danger);margin-bottom:1rem;position:relative}
+#capture-title.glitch{animation:glitch .3s steps(2) infinite;text-shadow:2px 0 #ff4444,-2px 0 #00ffff}
+@keyframes glitch{0%{transform:translate(0)}25%{transform:translate(-3px,2px);text-shadow:3px 0 #ff4444,-3px 0 #00ffff}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,-1px)}}
+#capture-points-lost{color:var(--danger);font-size:1.4rem;font-weight:700;animation:pulse 1s ease infinite;margin:.5rem 0}
+#capture-points-remain{color:var(--gold);font-size:1rem;margin-bottom:1rem}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+#capture-blackout{position:fixed;inset:0;z-index:8999;background:#000;opacity:0;pointer-events:none;transition:opacity .2s ease}
+#capture-blackout.show{opacity:.75;pointer-events:auto}
+.phase-hint{display:block;font-size:.75rem;color:rgba(232,245,233,.6);margin-top:.5rem}
+.sort-arrows{display:flex;flex-direction:column;gap:2px;margin-left:auto}
+.sort-arrows button{background:rgba(76,175,80,.2);border:1px solid var(--accent);color:var(--text);cursor:pointer;padding:2px 6px;font-size:.7rem;line-height:1}
+#journey-zone{margin-top:1rem;color:var(--gold);font-size:1rem;min-height:1.5em}
+#foliage-svg path{animation:foliageSway 6s ease-in-out infinite alternate;transform-origin:bottom center}
+@keyframes foliageSway{from{transform:rotate(-1deg)}to{transform:rotate(1deg)}}
+#capture-narrative{max-width:600px;line-height:1.7;margin-bottom:1.5rem;font-size:1rem}
+#capture-dino-img{max-width:280px;margin:1rem 0;filter:drop-shadow(0 0 30px rgba(255,0,0,.5))}
+.capture-btns{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin-top:1rem}
+#final-screen{display:none;padding:2rem;text-align:center;position:relative;z-index:10}
+#final-screen.show{display:block}
+.helicopter-scene{height:200px;position:relative;margin:2rem 0;overflow:hidden;background:linear-gradient(180deg,#1a3a5c 0%,#0a1a0a 60%);border-radius:8px}
+.helicopter{position:absolute;bottom:40%;font-size:3rem;animation:flyAway 4s ease-in-out infinite}
+@keyframes flyAway{0%{left:-10%;transform:scale(1)}50%{left:50%;transform:scale(.8)}100%{left:110%;transform:scale(.5);opacity:.3}}
+.score-breakdown{text-align:left;max-width:500px;margin:1.5rem auto;background:var(--card);padding:1rem;border-radius:8px;border:1px solid var(--border)}
+.leaderboard{width:100%;max-width:500px;margin:1rem auto;border-collapse:collapse}
+.leaderboard th,.leaderboard td{padding:.5rem;border:1px solid rgba(76,175,80,.3);text-align:center;font-size:.9rem}
+.leaderboard th{background:rgba(76,175,80,.2);color:var(--gold)}
+.final-msg{font-size:1.2rem;color:var(--gold);margin:1rem 0;font-style:italic}
+.final-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;margin-top:1.5rem}
+#stats-canvas{display:block;margin:1rem auto;background:rgba(0,0,0,.3);border-radius:8px;max-width:100%}
+#map-modal,#stats-modal{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;padding:1rem}
+#map-modal.open,#stats-modal.open,#lb-modal.open{display:flex}
+.modal-content{background:#1a2e1a;border:3px solid var(--gold);border-radius:12px;padding:1.5rem;max-width:700px;width:100%;max-height:90vh;overflow-y:auto;position:relative}
+.map-modal-content{max-width:860px;width:100%;background:rgba(0,12,0,.96);border:1px solid #2a6b2a;border-radius:20px;padding:32px;position:relative;max-height:90vh;overflow-y:auto}
+.map-modal-header{margin-bottom:24px;padding-right:40px}
+.map-modal-header h3{font-family:var(--mono);color:#ffc107;font-size:1.1rem;letter-spacing:.06em;margin-bottom:6px}
+.map-modal-header p{font-family:var(--mono);font-size:11px;color:rgba(76,175,80,.75)}
+.map-zones-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:24px}
+.map-zones-row2{grid-column:1/-1;display:flex;justify-content:center;gap:16px}
+.map-zones-row2 .map-zone-card{flex:0 1 calc(33.333% - 11px);max-width:calc(33.333% - 11px)}
+.map-zone-card{height:160px;border-radius:12px;overflow:hidden;position:relative;background-size:cover;background-position:center;border:1px solid transparent;transition:transform .2s ease,border-color .2s ease,box-shadow .2s ease;cursor:default}
+.map-zone-card::before{content:'';position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.15));transition:background .2s ease;pointer-events:none}
+.map-zone-card:hover{transform:scale(1.03);border-color:rgba(74,222,74,.5)}
+.map-zone-card:hover::before{background:linear-gradient(to top,rgba(0,0,0,.65),rgba(0,0,0,.15))}
+.map-zone-card.active{border:2px solid #4ade4a}
+.map-here{position:absolute;top:10px;left:10px;font-size:10px;font-family:var(--mono);color:#4ade4a;display:none;animation:herePulse 1.5s ease infinite}
+.map-zone-card.active .map-here{display:block}
+@keyframes herePulse{0%,100%{opacity:1}50%{opacity:.3}}
+.map-status-badge{position:absolute;top:10px;right:10px;font-family:var(--mono);font-size:9px;padding:4px 8px;border-radius:4px;letter-spacing:.04em;z-index:2}
+.map-status-badge.done{background:#1a6b1a;color:#fff}
+.map-status-badge.progress{background:#6b5500;color:#ffc107}
+.map-status-badge.progress .pulse-dot{animation:pulse 1s ease infinite}
+.map-status-badge.locked{background:rgba(0,0,0,.6);color:#666}
+.map-status-badge.lost{background:#6b1a1a;color:#ff6666}
+.map-zone-content{position:absolute;bottom:0;left:0;right:0;padding:12px 14px;z-index:2}
+.map-dino{display:block;font-size:10px;color:rgba(74,222,74,.85);font-family:var(--mono);margin-bottom:4px}
+.map-name{display:block;font-size:14px;font-weight:700;color:#fff;margin-bottom:4px;line-height:1.2}
+.map-stats{display:block;font-size:11px;color:rgba(255,255,255,.7);font-family:var(--mono)}
+.map-route-line{width:100%;height:48px;display:block}
+.map-route-line line,.map-route-line circle{transition:all .3s ease}
+.modal-close{position:absolute;top:.8rem;right:1rem;background:none;border:none;color:var(--text);font-size:1.5rem;cursor:pointer;z-index:5}
+#nedry-overlay{position:fixed;inset:0;z-index:10000;background:#000;display:none;align-items:center;justify-content:center}
+#nedry-overlay.show{display:flex}
+#nedry-overlay p{font-family:'Rajdhani',sans-serif;font-size:2rem;color:var(--danger);letter-spacing:.2em}
+@media(max-width:1023px){header{padding:0 12px}.header-controls{gap:12px}.audio-ctrl input[type=range]{width:80px;max-width:80px}.cm-body{padding:24px 20px}.map-zones-grid{grid-template-columns:repeat(2,1fr)}.map-zones-row2 .map-zone-card{flex:1;max-width:none}}
+@media(max-width:767px){.logo{font-size:10px}.header-location{font-size:10px;max-width:45%}.survival-points{font-size:18px}.card{padding:24px 20px}.zone-connector{width:20px}.cm-body{padding:16px 12px;top:92px}.cm-header{height:88px;padding:0 16px}.cm-time-bar{top:88px}.cm-header-blocks{display:grid;grid-template-columns:repeat(2,1fr)}.cm-block{border-right:none;border-bottom:1px solid #1a4a1a}.cm-block:nth-child(odd){border-right:1px solid #1a4a1a}.cm-block:nth-child(3),.cm-block:nth-child(4){border-bottom:none}.penalty-banner-fixed{top:92px}.options-grid{grid-template-columns:1fr}.puzzle-dd-wrap,.puzzle-sort-grid,.classify-cols,.match-grid{grid-template-columns:1fr}.question-text{font-size:18px}.puzzle-panel,.modal-content,.map-modal-content{width:95%;max-width:95%;padding:20px}.map-zones-grid{grid-template-columns:1fr}.map-zones-row2{flex-direction:column}.map-zones-row2 .map-zone-card{flex:1;max-width:100%}}
+</style>
+</head>
+<body class="pre-login">
+<div id="bg-stack">
+<div class="bg-layer active" data-bg="intro"><img src="img/zona1-laboratorio.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z1"><img src="img/zona1-laboratorio.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z2"><img src="img/zona2-trex.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z3"><img src="img/zona3-raptor.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z4"><img src="img/zona4-valle.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z5"><img src="img/zona5-visitantes.png" alt="" loading="lazy"></div>
+<div class="bg-layer" data-bg="z6"><img src="img/zona6-helicoptero.png" alt="" loading="lazy" onerror="this.src='img/zona5-visitantes.png'"></div>
+<div class="bg-layer" data-bg="final"><img src="img/final-playa.png" alt="" loading="lazy"></div>
+</div><div class="bg-overlay"></div>
+<svg id="foliage-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+<path d="M0,800 Q200,750 400,820 T800,790 T1200,830 T1600,800 T1920,820 L1920,1080 L0,1080Z" fill="rgba(20,60,20,.4)"/>
+<path d="M0,900 Q300,860 600,910 T1200,880 T1920,920 L1920,1080 L0,1080Z" fill="rgba(10,40,10,.5)"/>
+</svg>
+<div id="fog-layer">
+<div class="fog-particle" style="top:10%;animation-duration:18s;animation-delay:0.0s"></div>
+<div class="fog-particle" style="top:17%;animation-duration:21s;animation-delay:2.5s"></div>
+<div class="fog-particle" style="top:24%;animation-duration:24s;animation-delay:5.0s"></div>
+<div class="fog-particle" style="top:31%;animation-duration:27s;animation-delay:7.5s"></div>
+<div class="fog-particle" style="top:38%;animation-duration:30s;animation-delay:10.0s"></div>
+<div class="fog-particle" style="top:45%;animation-duration:33s;animation-delay:12.5s"></div>
+<div class="fog-particle" style="top:52%;animation-duration:36s;animation-delay:15.0s"></div>
+<div class="fog-particle" style="top:59%;animation-duration:19s;animation-delay:17.5s"></div>
+<div class="fog-particle" style="top:66%;animation-duration:22s;animation-delay:20.0s"></div>
+<div class="fog-particle" style="top:73%;animation-duration:25s;animation-delay:22.5s"></div>
+<div class="fog-particle" style="top:80%;animation-duration:28s;animation-delay:25.0s"></div>
+<div class="fog-particle" style="top:87%;animation-duration:31s;animation-delay:27.5s"></div>
+</div>
+<div id="zone-effects"><div id="rain-layer"></div><div id="lightning-flash"></div><div id="water-gradient"></div></div>
+<div id="audio-fallback">⚠ Web Audio no disponible — experiencia sin sonido procedural</div>
+<div id="login-screen">
+  <div class="login-card">
+    <div class="login-brand">⚡ INGEN RESEARCH</div>
+    <h1 class="login-title title-font">REGISTRO DE SUPERVIVIENTE</h1>
+    <p class="login-subtitle">Identifícate antes de ingresar a la isla</p>
+    <div class="login-field">
+      <label for="login-first">Nombre</label>
+      <input type="text" id="login-first" name="first_name" autocomplete="given-name" maxlength="30">
+      <span class="login-check">✓</span>
+      <div class="login-error" id="login-first-error"></div>
+    </div>
+    <div class="login-field">
+      <label for="login-last">Apellido</label>
+      <input type="text" id="login-last" name="last_name" autocomplete="family-name" maxlength="30">
+      <span class="login-check">✓</span>
+      <div class="login-error" id="login-last-error"></div>
+    </div>
+    <button type="button" class="login-submit" id="login-submit" disabled>🦕 Ingresar a la Isla</button>
+  </div>
+</div>
+<div id="welcome-panel">
+  <div class="welcome-card">
+    <h2 id="welcome-title">¡Bienvenido!</h2>
+    <div class="welcome-stats" id="welcome-stats" style="display:none">
+      <div class="welcome-stat"><span>Partidas jugadas</span><strong id="ws-games">0</strong></div>
+      <div class="welcome-stat"><span>Mejor puntaje</span><strong id="ws-best">0 pts</strong></div>
+      <div class="welcome-stat"><span>Última partida</span><strong id="ws-last">0 pts</strong></div>
+      <div class="welcome-stat"><span>Zonas completadas en total</span><strong id="ws-zones">0</strong></div>
+    </div>
+  </div>
+</div>
+<div id="offline-banner">⚠ Modo sin conexión — puntajes guardados localmente</div>
+<div id="nedry-overlay"><p>ACCESO DENEGADO, AMIGO</p></div>
+<header>
+  <div class="header-row-top">
+    <div class="logo" id="header-logo">⚡ INGEN RESEARCH — SECTOR EDUCATIVO</div>
+    <div class="header-location" id="hud-zone">UBICACIÓN: El Laboratorio Abandonado de Hammond</div>
+  </div>
+  <div class="header-row-main">
+    <div class="header-survival">
+      <span class="survival-label">SUPERVIVENCIA</span>
+      <span class="survival-points" id="hud-points">0</span>
+    </div>
+    <div class="header-zone-progress">
+      <div class="zone-progress-track" id="zone-progress-track">
+        <div class="zone-dot-wrap"><span class="zone-dot active" data-zone="1"></span><span class="zone-tip">El Laboratorio de Hammond</span></div>
+        <span class="zone-connector"></span>
+        <div class="zone-dot-wrap"><span class="zone-dot pending" data-zone="2"></span><span class="zone-tip">El Paddock del T-Rex</span></div>
+        <span class="zone-connector"></span>
+        <div class="zone-dot-wrap"><span class="zone-dot pending" data-zone="3"></span><span class="zone-tip">La Velocirraptor Kitchen</span></div>
+        <span class="zone-connector"></span>
+        <div class="zone-dot-wrap"><span class="zone-dot pending" data-zone="4"></span><span class="zone-tip">El Nido de los Braquiosaurios</span></div>
+        <span class="zone-connector"></span>
+        <div class="zone-dot-wrap"><span class="zone-dot pending" data-zone="5"></span><span class="zone-tip">Centro de Visitantes</span></div>
+        <span class="zone-connector"></span>
+        <div class="zone-dot-wrap"><span class="zone-dot pending" data-zone="6"></span><span class="zone-tip">El Helicóptero</span></div>
+      </div>
+    </div>
+    <div class="header-controls">
+      <div class="audio-ctrl">
+        <button class="btn btn-outline btn-sm" id="btn-mute" type="button" title="Silenciar"><i class="fas fa-volume-up"></i></button>
+        <input type="range" id="volume-slider" min="0" max="100" value="70">
+      </div>
+      <button class="btn btn-outline btn-sm" id="btn-map" type="button"><i class="fas fa-map"></i> Mapa</button>
+      <button class="btn btn-outline btn-sm" id="btn-leaderboard" type="button">🏆 Tabla</button>
+    </div>
+  </div>
+</header>
+<div id="dino-threat"></div>
+<div id="footprint">🦶</div>
+<div id="capture-blackout"></div>
+<div id="journey-screen"><div id="journey-text"></div><div id="journey-zone"></div><div id="journey-skip">[ Clic para saltar ]</div></div>
+<div id="challenge-modal">
+  <div id="penalty-banner" class="penalty-banner-fixed"><span class="penalty-main"></span><span class="penalty-sub"></span></div>
+  <header class="cm-header">
+    <div class="cm-header-blocks">
+      <div class="cm-block"><span class="cm-label">RETO</span><span class="cm-value" id="modal-reto-val">1 de 3</span></div>
+      <div class="cm-block"><span class="cm-label">PENALIZACIONES</span><span class="cm-value penalty-ok" id="modal-penalty-val">⚡ 0</span></div>
+      <div class="cm-block"><span class="cm-label">PUNTOS EN JUEGO</span><span class="cm-value cm-points" id="modal-points-val">100 pts</span></div>
+      <div class="cm-block cm-block-last"><span class="cm-label">TIEMPO</span><span class="cm-value timer-ok" id="modal-timer-val">--:--</span></div>
+    </div>
+  </header>
+  <div class="cm-time-bar"><div class="cm-time-fill timer-ok" id="modal-time-fill"></div></div>
+  <div class="cm-body" id="challenge-modal-body"></div>
+  <div class="cm-puzzle-progress" id="modal-puzzle-progress"></div>
+  <footer class="cm-footer">
+    <span class="cm-threat" id="modal-threat-label">⚠ AMENAZA ACTIVA: —</span>
+    <div class="cm-footer-right">
+      <span class="cm-footer-status" id="modal-footer-status">Selecciona una opción para continuar</span>
+      <button type="button" class="cm-next-btn" id="modal-next-btn" style="display:none">Siguiente reto →</button>
+      <button type="button" class="cm-verify-btn" id="modal-verify-btn" style="display:none" disabled>Verificar respuestas</button>
+    </div>
+  </footer>
+</div>
+<div id="capture-overlay">
+  <img id="capture-dino-img" alt="" src="" style="max-width:200px">
+  <h2 id="capture-title">CAPTURADO</h2>
+  <p id="capture-narrative"></p>
+  <p id="capture-points-lost">-50 pts</p>
+  <p id="capture-points-remain"></p>
+  <p id="capture-attempt"></p>
+  <p id="capture-tip"></p>
+  <div class="capture-btns">
+    <button class="btn" id="btn-capture-retry" type="button">🔄 Intentar de nuevo</button>
+  </div>
+</div>
+<main id="game-main">
+
+<section class="zone active phase-a" id="zona-1" data-time="240" data-dino="🦕" data-dino-name="Dilophosaurus" data-bg="z1">
+<div class="zone-header"><h2 class="zone-title">Zona 1 — El Laboratorio de Hammond</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ Dilophosaurus se acerca</span><span id="timer-1">4:00</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-1"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 1</span><p class="narrative-title">El Laboratorio Abandonado de Hammond</p><h3>¿Qué es la Neurociencia del Aprendizaje?</h3>
+<p class="subtitle">Descubres cuadernos de notas científicas sobre plasticidad neuronal...</p>
+<p>La neurociencia del aprendizaje estudia cómo el cerebro adquiere, procesa y retiene información. Cuando aprendemos, las neuronas forman nuevas conexiones sinápticas mediante un proceso llamado plasticidad neuronal. Hebb (1949) estableció que "las neuronas que se activan juntas, se conectan juntas". Esta base biológica explica por qué la repetición espaciada, las emociones y el sueño son cruciales para consolidar el aprendizaje.</p>
+<blockquote class="citation">Hebb, D.O. (1949). <em>The Organization of Behavior</em>. Wiley.</blockquote>
+<div class="chips"><span class="chip"><i class="fas fa-link"></i> Sinapsis</span><span class="chip"><i class="fas fa-brain"></i> Plasticidad neuronal</span><span class="chip"><i class="fas fa-database"></i> Consolidación</span><span class="chip"><i class="fas fa-memory"></i> Memoria</span></div>
+<div class="resource-btns">
+<!-- ENLACE: Zona 1 - Recurso 1 - Reemplazar href="#" -->
+<a href="presentaciones/zona1-neurociencia.pdf" target="_blank" class="resource-btn" data-resource-id="z1-presentacion">📄 Ver Presentación Completa</a>
+</div></div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-phase-start="1">🦕 ¡Entendido! Enfrentar el reto</button><small class="phase-hint">Al hacer clic, comenzará el temporizador</small></div>
+<div class="challenge" data-challenge="quiz" data-id="z1q1" data-answer="b" data-type="quiz">
+<h4>Reto 1 — Pregunta múltiple</h4>
+<p>¿Qué científico estableció que las neuronas que se activan juntas se conectan juntas?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Pavlov</button><button class="quiz-opt" data-val="b">b) Hebb</button>
+<button class="quiz-opt" data-val="c">c) Skinner</button><button class="quiz-opt" data-val="d">d) Piaget</button>
+</div><div class="feedback ok">¡Correcto! Donald Hebb (1949) sentó las bases de la neurociencia del aprendizaje con este principio fundamental.</div>
+<div class="feedback bad">Incorrecto. Repasa el principio de Hebb sobre la co-activación neuronal.</div></div>
+<div class="challenge" data-challenge="dd-match" data-id="z1p1" data-type="puzzle" data-pairs='{"Sinapsis":"Conexión entre dos neuronas","Axón":"Fibra que transmite impulsos","Dendrita":"Recibe señales de otras neuronas","Mielina":"Cubierta que acelera la conducción"}'>
+<h4>Reto 2 — Rompecabezas del microscopio</h4>
+<p>Arrastra cada término a su definición correcta:</p>
+<div class="dd-zone" id="dd-z1"></div>
+<button class="btn" type="button" data-check-dd="z1p1">Verificar</button>
+<div class="feedback ok">¡Perfecto! Dominas la anatomía sináptica básica.</div></div>
+</section>
+
+<section class="zone phase-a" id="zona-2" data-time="210" data-dino="🦖" data-dino-name="T-Rex" data-bg="z2">
+<div class="zone-header"><h2 class="zone-title">Zona 2 — El Paddock del T-Rex</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ T-Rex se acerca</span><span id="timer-2">3:30</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-2"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 2</span><p class="narrative-title">El Paddock del T-Rex</p><h3>El Rol de las Emociones en el Aprendizaje</h3>
+<p class="subtitle">El rugido retumba desde el paddock cercano bajo la tormenta...</p>
+<p>La amígdala, estructura clave del sistema límbico, actúa como filtro emocional de toda información entrante. LeDoux (1996) demostró que las emociones modulan la memoria: aprendemos mejor lo que nos genera curiosidad, sorpresa o satisfacción. El cortisol (hormona del estrés) en niveles altos bloquea el hipocampo, impidiendo la formación de nuevos recuerdos. Por ello, los ambientes de aprendizaje psicológicamente seguros son una necesidad biológica, no solo pedagógica.</p>
+<blockquote class="citation">LeDoux, J. (1996). <em>The Emotional Brain</em>. Simon &amp; Schuster.</blockquote>
+<div class="chips"><span class="chip"><i class="fas fa-heart-pulse"></i> Amígdala</span><span class="chip"><i class="fas fa-bolt"></i> Cortisol</span><span class="chip"><i class="fas fa-hippo"></i> Hipocampo</span><span class="chip"><i class="fas fa-wave-square"></i> Sistema límbico</span></div>
+<div class="resource-btns">
+<!-- ENLACE: Zona 2 - Recurso 1 - Reemplazar href="#" -->
+<a href="presentaciones/zona2-emociones.pdf" target="_blank" class="resource-btn" data-resource-id="z2-presentacion">📄 Ver Presentación Completa</a>
+</div></div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-phase-start="2">🦕 ¡Entendido! Enfrentar el reto</button><small class="phase-hint">Al hacer clic, comenzará el temporizador</small></div>
+<div class="challenge" data-challenge="quiz" data-id="z2q1" data-answer="c" data-type="quiz">
+<h4>Reto 1 — Pregunta múltiple</h4>
+<p>¿Qué hormona en niveles elevados bloquea la formación de nuevos recuerdos en el hipocampo?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Dopamina</button><button class="quiz-opt" data-val="b">b) Serotonina</button>
+<button class="quiz-opt" data-val="c">c) Cortisol</button><button class="quiz-opt" data-val="d">d) Adrenalina</button>
+</div><div class="feedback ok">¡Correcto! El cortisol elevado inhibe la plasticidad hipocampal.</div>
+<div class="feedback bad">Incorrecto. Piensa en la hormona del estrés crónico.</div></div>
+<div class="challenge" data-challenge="quiz" data-id="z2q2" data-answer="b" data-type="quiz">
+<h4>Reto 2 — Pregunta múltiple</h4>
+<p>Según LeDoux, ¿qué estructura cerebral actúa como filtro emocional de la información?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Cerebelo</button><button class="quiz-opt" data-val="b">b) Amígdala</button>
+<button class="quiz-opt" data-val="c">c) Córtex prefrontal</button><button class="quiz-opt" data-val="d">d) Tálamo</button>
+</div><div class="feedback ok">¡Correcto! La amígdala evalúa la relevancia emocional de cada estímulo.</div>
+<div class="feedback bad">Incorrecto. Es una estructura del sistema límbico.</div></div>
+<div class="challenge" data-challenge="sort" data-id="z2p1" data-type="puzzle" data-order="Estímulo,Amígdala,Hipocampo,Memoria a largo plazo">
+<h4>Reto 3 — Ordena el proceso emocional-memoria</h4>
+<div class="sort-list" id="sort-z2"></div>
+<button class="btn" type="button" data-check-sort="z2p1">Verificar orden</button>
+<div class="feedback ok">¡Secuencia correcta! Las emociones filtran antes de consolidar.</div></div>
+</section>
+
+<section class="zone phase-a" id="zona-3" data-time="180" data-dino="🦖" data-dino-name="Velociraptor" data-bg="z3">
+<div class="zone-header"><h2 class="zone-title">Zona 3 — La Velocirraptor Kitchen</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ Velociraptor se acerca</span><span id="timer-3">3:00</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-3"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 3</span><p class="narrative-title">La Velocirraptor Kitchen</p><h3>Neuroplasticidad y Aprendizaje Activo</h3>
+<p class="subtitle">Rasguños metálicos en la cocina. Algo inteligente te acecha...</p>
+<p>La neuroplasticidad es la capacidad del cerebro para reorganizarse formando nuevas conexiones durante toda la vida. Merzénich (2013) demostró que el aprendizaje activo —donde el alumno participa, toma decisiones y recibe feedback inmediato— genera cambios estructurales más profundos que la lectura pasiva. El efecto de retrieval practice (práctica de recuperación) de Roediger &amp; Karpicke (2006) confirma que el acto de recordar fortalece la memoria más que releer el material.</p>
+<blockquote class="citation">Merzénich, M. (2013). <em>Soft-Wired</em>. Parnassus; Roediger &amp; Karpicke (2006). <em>Psychological Science</em>.</blockquote>
+<div class="chips"><span class="chip"><i class="fas fa-arrows-spin"></i> Neuroplasticidad</span><span class="chip"><i class="fas fa-recycle"></i> Retrieval Practice</span><span class="chip"><i class="fas fa-comment-dots"></i> Feedback</span><span class="chip"><i class="fas fa-hand-pointer"></i> Aprendizaje activo</span></div>
+<div class="resource-btns">
+<!-- ENLACE: Zona 3 - Recurso 1 - Reemplazar href="#" -->
+<a href="presentaciones/zona3-neuroplasticidad.pdf" target="_blank" class="resource-btn" data-resource-id="z3-presentacion">📄 Ver Presentación Completa</a>
+</div></div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-phase-start="3">🦕 ¡Entendido! Enfrentar el reto</button><small class="phase-hint">Al hacer clic, comenzará el temporizador</small></div>
+<div class="challenge" data-challenge="quiz" data-id="z3q1" data-answer="c" data-type="quiz">
+<h4>Reto 1 — Pregunta múltiple</h4>
+<p>¿Qué práctica de estudio fortalece más la memoria según Roediger &amp; Karpicke?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Releer el material</button><button class="quiz-opt" data-val="b">b) Hacer mapas mentales</button>
+<button class="quiz-opt" data-val="c">c) Retrieval practice</button><button class="quiz-opt" data-val="d">d) Escuchar podcasts</button>
+</div><div class="feedback ok">¡Correcto! Recuperar activamente supera a la relectura pasiva.</div>
+<div class="feedback bad">Incorrecto. Piensa en practicar la recuperación activa.</div></div>
+<div class="challenge" data-challenge="match" data-id="z3p1" data-type="puzzle" data-pairs='{"Neuroplasticidad":"Reorganización cerebral continua","Retrieval practice":"Recordar activamente el material","Feedback inmediato":"Corrección que refuerza conexiones","Aprendizaje activo":"Participación y decisiones del alumno","Metacognición":"Pensar sobre el propio pensamiento","Espaciado":"Distribuir repasos en el tiempo"}'>
+<h4>Reto 2 — Red neuronal: conecta los pares</h4>
+<p>Haz clic en un concepto y luego en su descripción:</p>
+<div class="match-grid" id="match-z3"><canvas class="match-canvas-el" id="match-canvas-z3"></canvas><div class="match-col" id="match-left-z3"></div><div class="match-col" id="match-right-z3"></div></div>
+<div class="feedback ok">¡Red completa! Todas las conexiones son correctas.</div></div>
+<div class="challenge" data-challenge="quiz" data-id="z3q2" data-answer="c" data-type="quiz">
+<h4>Reto 3 — Pregunta múltiple</h4>
+<p>La neuroplasticidad ocurre:</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Solo en la infancia</button><button class="quiz-opt" data-val="b">b) Solo durante el sueño</button>
+<button class="quiz-opt" data-val="c">c) A lo largo de toda la vida</button><button class="quiz-opt" data-val="d">d) Solo con estimulación química</button>
+</div><div class="feedback ok">¡Correcto! El cerebro se reorganiza durante toda la vida.</div>
+<div class="feedback bad">Incorrecto. La plasticidad no se limita a la infancia.</div></div>
+</section>
+
+<section class="zone phase-a" id="zona-4" data-time="240" data-dino="🦏" data-dino-name="Triceratops" data-bg="z4">
+<div class="zone-header"><h2 class="zone-title">Zona 4 — El Nido de los Braquiosaurios</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ Triceratops se acerca</span><span id="timer-4">4:00</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-4"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 4</span><p class="narrative-title">El Nido de los Braquiosaurios</p><h3>El Sueño y la Consolidación de la Memoria</h3>
+<p class="subtitle">El valle de los Braquiosaurios aparece entre la bruma matinal...</p>
+<p>Durante el sueño, especialmente en fase REM y sueño profundo (NREM), el hipocampo "reproduce" las experiencias del día y las transfiere a la corteza para su almacenamiento a largo plazo. Walker (2017) documenta que dormir menos de 6 horas reduce en un 40% la capacidad del cerebro de formar nuevos recuerdos. La siesta de 20-30 minutos post-aprendizaje aumenta significativamente la retención. Esto convierte al sueño en la herramienta de consolidación más poderosa y gratuita disponible.</p>
+<blockquote class="citation">Walker, M. (2017). <em>Why We Sleep</em>. Scribner.</blockquote>
+<div class="chips"><span class="chip"><i class="fas fa-moon"></i> Fase REM</span><span class="chip"><i class="fas fa-bed"></i> NREM</span><span class="chip"><i class="fas fa-hippo"></i> Hipocampo</span><span class="chip"><i class="fas fa-database"></i> Consolidación</span><span class="chip"><i class="fas fa-clock"></i> Siesta</span></div>
+<div class="resource-btns">
+<!-- ENLACE: Zona 4 - Recurso 1 - Reemplazar href="#" -->
+<a href="presentaciones/zona4-sueno.pdf" target="_blank" class="resource-btn" data-resource-id="z4-presentacion">📄 Ver Presentación Completa</a>
+</div></div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-phase-start="4">🦕 ¡Entendido! Enfrentar el reto</button><small class="phase-hint">Al hacer clic, comenzará el temporizador</small></div>
+<div class="challenge" data-challenge="quiz" data-id="z4q1" data-answer="c" data-type="quiz">
+<h4>Reto 1 — Pregunta múltiple</h4>
+<p>Según Walker, dormir menos de 6 horas reduce la capacidad de formar nuevos recuerdos en un:</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) 20%</button><button class="quiz-opt" data-val="b">b) 30%</button>
+<button class="quiz-opt" data-val="c">c) 40%</button><button class="quiz-opt" data-val="d">d) 50%</button>
+</div><div class="feedback ok">¡Correcto! El sueño insuficiente reduce drásticamente la memoria.</div>
+<div class="feedback bad">Incorrecto. Walker documenta una reducción del 40%.</div></div>
+<div class="challenge" data-challenge="quiz" data-id="z4q2" data-answer="b" data-type="quiz">
+<h4>Reto 2 — Pregunta múltiple</h4>
+<p>¿Cuál es la duración óptima de siesta post-aprendizaje?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) 5-10 min</button><button class="quiz-opt" data-val="b">b) 20-30 min</button>
+<button class="quiz-opt" data-val="c">c) 45-60 min</button><button class="quiz-opt" data-val="d">d) 90 min</button>
+</div><div class="feedback ok">¡Correcto! 20-30 minutos optimizan la consolidación sin inercia del sueño.</div>
+<div class="feedback bad">Incorrecto. Una siesta breve de 20-30 min es ideal.</div></div>
+<div class="challenge" data-challenge="sort" data-id="z4p1" data-type="puzzle" data-order="N1,N2,N3 (sueño profundo),REM">
+<h4>Reto 3 — Ordena las fases del sueño</h4>
+<div class="sort-list" id="sort-z4"></div>
+<button class="btn" type="button" data-check-sort="z4p1">Verificar orden</button>
+<div class="feedback ok">¡Secuencia correcta del ciclo del sueño!</div></div>
+</section>
+
+<section class="zone phase-a" id="zona-5" data-time="300" data-dino="🐊" data-dino-name="Espinosauro" data-bg="z5">
+<div class="zone-header"><h2 class="zone-title">Zona 5 — El Centro de Visitantes — Escape Final</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ Espinosauro se acerca</span><span id="timer-5">5:00</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-5"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 5</span><p class="narrative-title">El Centro de Visitantes — Escape Final</p><h3>Estrategias Neurocientíficas para Optimizar el Aprendizaje</h3>
+<p class="subtitle">El helicóptero de rescate está en el centro de visitantes...</p>
+<p>Integrar la neurociencia en la práctica educativa implica: (1) Repetición espaciada —revisar contenido en intervalos crecientes activa la reconsolidación sináptica (Ebbinghaus, 1885); (2) Interleaving —mezclar temas durante el estudio confunde al cerebro productivamente, forzando conexiones más robustas; (3) Elaboración —explicar con palabras propias activa el procesamiento profundo (Craik &amp; Lockhart, 1972); (4) Movimiento físico —el ejercicio aeróbico aumenta el BDNF (Factor Neurotrófico Derivado del Cerebro), favoreciendo la neurogénesis en el hipocampo (Ratey, 2008). Aplicar estas estrategias transforma radicalmente los resultados de aprendizaje.</p>
+<blockquote class="citation">Ebbinghaus, H. (1885). <em>Memory</em>; Craik &amp; Lockhart (1972). <em>Journal of Verbal Learning</em>; Ratey, J. (2008). <em>Spark</em>.</blockquote>
+<div class="chips"><span class="chip"><i class="fas fa-calendar-days"></i> Repetición espaciada</span><span class="chip"><i class="fas fa-shuffle"></i> Interleaving</span><span class="chip"><i class="fas fa-dna"></i> BDNF</span><span class="chip"><i class="fas fa-seedling"></i> Neurogénesis</span><span class="chip"><i class="fas fa-pen"></i> Elaboración</span></div>
+<div class="resource-btns">
+<!-- ENLACE: Zona 5 - Recurso 1 - Reemplazar href="#" -->
+<a href="presentaciones/zona5-estrategias.pdf" target="_blank" class="resource-btn" data-resource-id="z5-presentacion">📄 Ver Presentación Completa</a>
+</div></div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-phase-start="5">🦕 ¡Entendido! Enfrentar el reto</button><small class="phase-hint">Al hacer clic, comenzará el temporizador</small></div>
+<div class="challenge" data-challenge="quiz" data-id="z5q1" data-answer="b" data-type="quiz">
+<h4>Reto 1 — Pregunta múltiple</h4>
+<p>¿Qué proteína aumenta con el ejercicio aeróbico y favorece la formación de nuevas neuronas?</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Cortisol</button><button class="quiz-opt" data-val="b">b) BDNF</button>
+<button class="quiz-opt" data-val="c">c) Adrenalina</button><button class="quiz-opt" data-val="d">d) Insulina</button>
+</div><div class="feedback ok">¡Correcto! El BDNF promueve la neurogénesis hipocampal.</div>
+<div class="feedback bad">Incorrecto. Es el factor neurotrófico derivado del cerebro.</div></div>
+<div class="challenge" data-challenge="quiz" data-id="z5q2" data-answer="c" data-type="quiz">
+<h4>Reto 2 — Pregunta múltiple</h4>
+<p>La 'curva del olvido' fue descrita originalmente por:</p>
+<div class="quiz-options">
+<button class="quiz-opt" data-val="a">a) Hebb</button><button class="quiz-opt" data-val="b">b) Piaget</button>
+<button class="quiz-opt" data-val="c">c) Ebbinghaus</button><button class="quiz-opt" data-val="d">d) Vygotsky</button>
+</div><div class="feedback ok">¡Correcto! Ebbinghaus pionero en el estudio experimental de la memoria.</div>
+<div class="feedback bad">Incorrecto. Fue el psicólogo alemán del siglo XIX.</div></div>
+<div class="challenge" data-challenge="classify" data-id="z5p1" data-type="puzzle" data-science="Repetición espaciada,Retrieval practice,Interleaving,Sueño post-aprendizaje" data-myth="Estilos de aprendizaje VAK,Releer subrayando,Multitarea eficiente,Usar solo el 10% del cerebro">
+<h4>Reto 3 — Clasifica las estrategias</h4>
+<p>Arrastra cada estrategia a la columna correcta:</p>
+<div class="classify-pool" id="pool-z5"></div>
+<div class="classify-cols"><div class="classify-col science" data-col="science"><h5>Basada en Neurociencia ✓</h5></div><div class="classify-col myth" data-col="myth"><h5>Mito del aprendizaje ✗</h5></div></div>
+<button class="btn" type="button" data-check-classify="z5p1">Verificar clasificación</button>
+<div class="feedback ok">¡Clasificación perfecta! Distinguiste ciencia de mito.</div></div>
+</section>
+
+<section class="zone phase-a" id="zona-6" data-time="900" data-dino="🦅" data-dino-name="Pterosaurio" data-bg="z6">
+<div class="zone-header"><h2 class="zone-title">Zona 6 — El Helicóptero — Prueba Final</h2>
+<div class="timer-wrap"><div class="timer-label"><span>⏱ Pterosaurio se acerca</span><span id="timer-6">15:00</span></div><div class="timer-bar"><div class="timer-fill" id="timer-fill-6"></div></div></div></div>
+<div class="card"><div class="card-body"><span class="zone-badge">ZONA 6</span><p class="narrative-title">A 300 metros de altura. El Pterosaurio acecha.</p><h3>Zona 6: El Helicóptero — Prueba Final</h3>
+<p class="subtitle">Has llegado al helipuerto. El helicóptero despega...</p>
+<p>Has recorrido toda la isla y has sobrevivido gracias a lo que aprendiste sobre neurociencia. Ahora viene la prueba definitiva: demostrar que los conocimientos se consolidaron en tu memoria a largo plazo. Responde el cuestionario final para completar tu escape. Cada error hará que el Pterosaurio se acerque más al helicóptero...</p>
+<p>Has llegado al helipuerto. El helicóptero despega. Pero mientras ascienden sobre la isla, una sombra enorme cruza el cielo... Un Pterosaurio gigante ataca el helicóptero. Debes demostrar todo lo que aprendiste para mantener el control y escapar.</p>
+</div></div>
+<div class="phase-btn-wrap"><button class="btn" type="button" data-final-start="6">🦅 Comenzar prueba final</button><small class="phase-hint">Al hacer clic, comenzará el temporizador de 15 minutos (10 preguntas, una sola oportunidad cada una)</small></div>
+</section>
+</main>
+<section id="final-screen">
+<h2 class="zone-title">¡Has escapado de la isla!</h2>
+<div class="helicopter-scene"><div class="helicopter">🚁</div></div>
+<p>Puntuación total: <strong id="final-total">0</strong> pts</p>
+<div class="score-breakdown" id="score-breakdown"></div>
+<p class="final-msg" id="final-msg"></p>
+<table class="leaderboard"><thead><tr><th>#</th><th>Puntos</th><th>Fecha</th></tr></thead><tbody id="leaderboard-body"></tbody></table>
+<div class="final-btns">
+<button class="btn" type="button" id="btn-restart">🔄 Intentar de nuevo</button>
+<button class="btn btn-outline" type="button" id="btn-stats">📊 Ver Estadísticas Completas</button>
+</div></section>
+<div id="map-modal"><div class="map-modal-content"><button class="modal-close" data-close="map">&times;</button>
+<div class="map-modal-header">
+<h3>🗺️ MAPA DE ISLA NUBLAR</h3>
+<p>Sistema de rastreo InGen — Actualización en tiempo real</p>
+</div>
+<div class="map-zones-grid" id="map-zones-grid">
+<div class="map-zone-card" data-zone="1" style="background-image:url('img/zona1-laboratorio.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge progress" data-badge="1"><span class="pulse-dot">●</span> EN CURSO</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: Dilophosaurus</span>
+<span class="map-name">El Laboratorio de Hammond</span>
+<span class="map-stats" data-stats="1">⭐ 0 pts  |  🔄 0 intentos</span>
+</div></div>
+<div class="map-zone-card" data-zone="2" style="background-image:url('img/zona2-trex.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge locked" data-badge="2">🔒 BLOQUEADA</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: T-Rex</span>
+<span class="map-name">El Paddock del T-Rex</span>
+<span class="map-stats" data-stats="2">⭐ — pts  |  🔒 Bloqueada</span>
+</div></div>
+<div class="map-zone-card" data-zone="3" style="background-image:url('img/zona3-raptor.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge locked" data-badge="3">🔒 BLOQUEADA</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: Velociraptor</span>
+<span class="map-name">La Velocirraptor Kitchen</span>
+<span class="map-stats" data-stats="3">⭐ — pts  |  🔒 Bloqueada</span>
+</div></div>
+<div class="map-zones-row2">
+<div class="map-zone-card" data-zone="4" style="background-image:url('img/zona4-valle.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge locked" data-badge="4">🔒 BLOQUEADA</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: Triceratops</span>
+<span class="map-name">El Nido de los Braquiosaurios</span>
+<span class="map-stats" data-stats="4">⭐ — pts  |  🔒 Bloqueada</span>
+</div></div>
+<div class="map-zone-card" data-zone="5" style="background-image:url('img/zona5-visitantes.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge locked" data-badge="5">🔒 BLOQUEADA</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: Espinosauro</span>
+<span class="map-name">El Centro de Visitantes</span>
+<span class="map-stats" data-stats="5">⭐ — pts  |  🔒 Bloqueada</span>
+</div></div>
+<div class="map-zone-card" data-zone="6" style="background-image:url('img/zona6-helicoptero.png')">
+<span class="map-here">📍 AQUÍ</span>
+<span class="map-status-badge locked" data-badge="6">🔒 BLOQUEADA</span>
+<div class="map-zone-content">
+<span class="map-dino">AMENAZA: Pterosaurio</span>
+<span class="map-name">El Helicóptero — Escape Final</span>
+<span class="map-stats" data-stats="6">⭐ — pts  |  🔒 Bloqueada</span>
+</div></div>
+</div>
+</div>
+<svg class="map-route-line" id="map-route-line" viewBox="0 0 550 40" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+<line x1="50" y1="20" x2="500" y2="20" stroke="#444" stroke-width="2" stroke-dasharray="6 4"/>
+<line id="map-route-done" x1="50" y1="20" x2="50" y2="20" stroke="#4ade4a" stroke-width="3"/>
+<circle cx="50" cy="20" r="5" fill="#666" data-node="1"/>
+<circle cx="150" cy="20" r="5" fill="#666" data-node="2"/>
+<circle cx="250" cy="20" r="5" fill="#666" data-node="3"/>
+<circle cx="350" cy="20" r="5" fill="#666" data-node="4"/>
+<circle cx="450" cy="20" r="5" fill="#666" data-node="5"/>
+<circle cx="500" cy="20" r="5" fill="#666" data-node="6"/>
+</svg>
+</div></div>
+<div id="lb-modal"><div class="lb-modal-content"><button class="modal-close" data-close="lb">&times;</button>
+<div class="lb-modal-header">
+<div><h3>SUPERVIVIENTES DE ISLA NUBLAR</h3><p>Top 10 — Mejores puntajes históricos</p></div>
+<button type="button" class="lb-refresh" id="lb-refresh" title="Actualizar">🔄</button>
+</div>
+<div id="lb-body"><div class="lb-status">Cargando datos...</div></div>
+</div></div>
+<div id="stats-modal"><div class="modal-content"><button class="modal-close" data-close="stats">&times;</button>
+<h3 class="title-font" style="color:var(--gold);margin-bottom:1rem">📊 Estadísticas por Zona</h3>
+<canvas id="stats-canvas" width="600" height="320"></canvas></div></div>
+<script>
+window.JP_DINOS = {
+  1: "img/dino-dilophosaurus.png",
+  2: "img/dino-trex.png",
+  3: "img/dino-raptor.png",
+  4: "img/dino-triceratops.png",
+  5: "img/dino-espinosauro.png",
+  6: "img/dino-pterosaurio.png"
+};
+</script>
+<script>
+(function(){
+'use strict';
+const API_BASE = window.location.hostname === 'localhost'
+  ? 'http://localhost:3001'
+  : 'https://jurassic-neuroscience-v2-production.up.railway.app';
+const SCORE={quiz:100,puzzle:150,timeBonus:2,wrong:-25,caught:-50,finalFirst:100,finalSecond:50};
+const TIME_PENALTY_QUIZ=30;
+const TIME_PENALTY_PUZZLE=15;
+const TIME_PENALTY_FINAL=45;
+const FINAL_QUIZ_COUNT=10;
+const NAME_RE=/^[A-ZÁÉÍÓÚÑ][a-záéíóúñ]+$/;
+const ZONES=6;
+const zoneMeta=[
+  {name:'El Laboratorio Abandonado de Hammond',dino:'Dilophosaurus',emoji:'🦕',
+   journey:'Escapas del laboratorio y corres hacia la selva...',
+   journeyNext:'→ ZONA 2: El Paddock del T-Rex',
+   capture:'El Dilophosaurus te ha encontrado en el laboratorio... Sus frills se despliegan mientras escupe veneno hacia ti.'},
+  {name:'El Paddock del T-Rex',dino:'T-Rex',emoji:'🦖',
+   journey:'El rugido se aleja. Llegas al paddock norte...',
+   journeyNext:'→ ZONA 3: La Velocirraptor Kitchen',
+   capture:'El rugido del T-Rex hace temblar el suelo. No puedes escapar de su visión basada en movimiento.'},
+  {name:'La Velocirraptor Kitchen',dino:'Velociraptor',emoji:'🦖',
+   journey:'Cruzas la cocina de servicio. Oyes rasguños metálicos...',
+   journeyNext:'→ ZONA 4: El Nido de los Braquiosaurios',
+   capture:'Los Velociraptores coordinaron el ataque desde tres ángulos. Son más inteligentes de lo que Hammond admitía.'},
+  {name:'El Nido de los Braquiosaurios',dino:'Triceratops',emoji:'🦏',
+   journey:'El valle de los Braquiosaurios aparece ante ti...',
+   journeyNext:'→ ZONA 5: El Centro de Visitantes',
+   capture:'El Triceratops embiste. Su cuerno te alcanza antes de que puedas llegar al jeep.'},
+  {name:'El Centro de Visitantes — Escape Final',dino:'Espinosauro',emoji:'🐊',
+   journey:'El helicóptero de rescate está en el centro de visitantes...',
+   journeyNext:'→ ZONA 6: El Helicóptero — Escape Final',
+   capture:'El Espinosauro emerge del río. Es más grande que el T-Rex y tus rutas de escape están cortadas.'},
+  {name:'El Helicóptero — Prueba Final',dino:'Pterosaurio',emoji:'🦅',
+   journey:'El helicóptero despega. Una sombra enorme cruza el cielo...',
+   journeyNext:'→ ¡ESCAPE!',
+   capture:'El Pterosaurio derriba el helicóptero... La isla te reclama una vez más. ¿Lo intentas de nuevo?'}
+];
+const DINO_SVG='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 160"><path fill="#4CAF50" d="M40,120 Q20,80 50,50 Q80,20 120,40 Q160,30 170,70 Q190,90 160,120 Q140,150 90,140 Q50,145 40,120Z"/><circle cx="130" cy="65" r="8" fill="#ffc107"/></svg>';
+const state={points:0,currentZone:1,zoneScores:{},completed:{},challenges:{},zoneLost:{},timeLeft:{},timerId:null,nedryBuffer:'',audioStarted:false,audioCtx:null,musicNodes:null,phase:'A',challengeQueue:[],challengeIdx:0,zoneAttempts:{},needsRetry:{},gameStarted:false,modalTimerId:null,audioEnabled:true,musicSlow:false,penaltyCount:0,capturePending:false,captureGraceId:null,captureActive:false,quizDelayId:null,challengeAdvancePending:null,offline:false,finalQuizQueue:[],finalQuizIdx:0,finalQuizScore:0,finalQuizWrongTotal:0,finalQuizInProgress:false,finalQuizFinished:false};
+function openChallengeModal(){const modal=document.getElementById('challenge-modal');document.body.classList.add('challenge-modal-open');document.body.style.overflow='hidden';modal.classList.add('open');modal.style.display='flex';modal.style.zIndex='9999';}
+function closeChallengeModals(){const modal=document.getElementById('challenge-modal');document.body.classList.remove('challenge-modal-open');document.body.style.overflow='';modal.classList.remove('open');modal.style.display='none';}
+function updateModalTimerUI(){const n=state.currentZone;const left=state.timeLeft[n]||0;const zone=document.getElementById('zona-'+n);const total=zone?parseInt(zone.dataset.time,10):240;const el=document.getElementById('modal-timer-val');const fill=document.getElementById('modal-time-fill');if(el){el.textContent=fmtTime(Math.max(left,0));el.className='cm-value '+(left>60?'timer-ok':left>=30?'timer-warn':'timer-danger');}if(fill){const pct=Math.max(0,left/total*100);fill.style.width=pct+'%';fill.className='cm-time-fill '+(left>60?'timer-ok':left>=30?'timer-warn':'timer-danger');}}
+function updateChallengeModalHeader(points){const total=state.challengeQueue.length;document.getElementById('modal-reto-val').textContent=(state.challengeIdx+1)+' de '+total;document.getElementById('modal-points-val').textContent=points+' pts';document.getElementById('modal-threat-label').textContent='⚠ AMENAZA ACTIVA: '+zoneMeta[state.currentZone-1].dino;updatePenaltyIndicator();updateModalTimerUI();}
+function hideChallengeNextButton(){const btn=document.getElementById('modal-next-btn');if(btn){btn.style.display='none';btn.onclick=null;}state.challengeAdvancePending=null;}
+function showChallengeNextButton(message,onAdvance,label){const status=document.getElementById('modal-footer-status');status.style.display='';status.textContent=message||'¡Reto completado!';const verifyBtn=document.getElementById('modal-verify-btn');verifyBtn.style.display='none';verifyBtn.disabled=true;const nextBtn=document.getElementById('modal-next-btn');nextBtn.textContent=label||'Siguiente reto →';state.challengeAdvancePending={onAdvance};nextBtn.style.display='inline-block';nextBtn.onclick=()=>{if(state.captureActive||!state.challengeAdvancePending)return;const fn=state.challengeAdvancePending.onAdvance;hideChallengeNextButton();fn();};}
+function advanceToNextChallenge(){closeChallengeModals();state.challengeIdx++;presentNextChallenge();}
+function setModalFooterQuiz(){document.getElementById('modal-footer-status').style.display='';document.getElementById('modal-footer-status').textContent='Selecciona una opción para continuar';document.getElementById('modal-verify-btn').style.display='none';document.getElementById('modal-next-btn').style.display='none';hideChallengeNextButton();document.getElementById('modal-puzzle-progress').textContent='';}
+function setModalFooterPuzzle(){document.getElementById('modal-footer-status').style.display='none';hideChallengeNextButton();const btn=document.getElementById('modal-verify-btn');btn.style.display='inline-block';btn.textContent='Verificar respuestas';btn.disabled=true;}
+function setModalFooterMatch(){document.getElementById('modal-footer-status').style.display='';document.getElementById('modal-footer-status').textContent='Selecciona y empareja los conceptos';document.getElementById('modal-verify-btn').style.display='none';document.getElementById('modal-next-btn').style.display='none';hideChallengeNextButton();document.getElementById('modal-puzzle-progress').textContent='';}
+function updatePuzzleProgress(placed,total){const el=document.getElementById('modal-puzzle-progress');if(placed==null||total==null){el.textContent='';return;}el.textContent=placed+' de '+total+' conceptos ubicados';}
+function withContentFade(setupFn){const modal=document.getElementById('challenge-modal');const body=document.getElementById('challenge-modal-body');if(modal.classList.contains('open')){body.classList.add('cm-fade-out');setTimeout(()=>{body.classList.remove('cm-fade-out');setupFn();body.classList.add('cm-fade-in');setTimeout(()=>body.classList.remove('cm-fade-in'),300);},300);}else setupFn();}
+function cancelPendingChallengeActions(){clearTimeout(state.quizDelayId);state.quizDelayId=null;clearTimeout(state.captureGraceId);state.captureGraceId=null;state.capturePending=false;hideChallengeNextButton();}
+function loadAttempts(){try{state.zoneAttempts=JSON.parse(sessionStorage.getItem('jp_zone_attempts')||'{}');}catch(e){state.zoneAttempts={};}}
+function saveAttempts(){sessionStorage.setItem('jp_zone_attempts',JSON.stringify(state.zoneAttempts));}
+function save(){sessionStorage.setItem('jurassicLearning',JSON.stringify({points:state.points,currentZone:state.currentZone,zoneScores:state.zoneScores,completed:state.completed,challenges:state.challenges,zoneAttempts:state.zoneAttempts,zoneLost:state.zoneLost}));}
+function load(){try{const d=JSON.parse(sessionStorage.getItem('jurassicLearning'));if(d){Object.assign(state,d);state.timeLeft={};if(d.zoneAttempts)state.zoneAttempts=d.zoneAttempts;if(d.zoneLost)state.zoneLost=d.zoneLost;else state.zoneLost={};}}catch(e){state.zoneLost={};}loadAttempts();}
+function fmtTime(s){return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function updatePenaltyIndicator(){const el=document.getElementById('modal-penalty-val');if(!el)return;el.textContent='⚡ '+state.penaltyCount;el.className='cm-value '+(state.penaltyCount===0?'penalty-ok':state.penaltyCount<=2?'penalty-warn':'penalty-danger');}
+function resetPenaltyCount(){state.penaltyCount=0;updatePenaltyIndicator();}
+function showPenaltyBanner(mainText,subText){const banner=document.getElementById('penalty-banner');if(!banner)return;banner.querySelector('.penalty-main').textContent=mainText;banner.querySelector('.penalty-sub').textContent=subText||'El dinosaurio se acerca...';banner.classList.remove('show');void banner.offsetWidth;banner.classList.add('show');setTimeout(()=>banner.classList.remove('show'),2000);}
+function applyTimePenalty(seconds,bannerText){const n=state.currentZone;state.penaltyCount++;updatePenaltyIndicator();state.timeLeft[n]=Math.max(0,(state.timeLeft[n]||0)-seconds);const zone=document.getElementById('zona-'+n);const total=parseInt(zone.dataset.time,10);updateTimerUI(n,state.timeLeft[n],total,true);updateDinoThreat(n,Math.max(state.timeLeft[n]/total,0));updateModalTimerUI();showPenaltyBanner(bannerText||('⏱️ -'+seconds+' segundos'),'El dinosaurio se acerca...');if(state.timeLeft[n]<=0){clearInterval(state.timerId);if(n===6&&state.finalQuizInProgress){state.capturePending=false;return true;}state.capturePending=true;return true;}return false;}
+function triggerCaptureAfterGrace(){clearTimeout(state.captureGraceId);state.captureGraceId=setTimeout(()=>{if(!state.capturePending||state.captureActive)return;state.capturePending=false;closeChallengeModals();triggerCapture(state.currentZone);},3000);}
+function updateHUD(){document.getElementById('hud-points').textContent=state.points;const loc=zoneMeta[state.currentZone-1]?zoneMeta[state.currentZone-1].name:'Isla Nublar';document.getElementById('hud-zone').textContent='UBICACIÓN: '+loc;updateZoneProgress();}
+function updateZoneProgress(){document.querySelectorAll('.zone-dot').forEach(dot=>{const z=parseInt(dot.dataset.zone,10);dot.classList.remove('done','active','pending');if(state.completed[z])dot.classList.add('done');else if(z===state.currentZone)dot.classList.add('active');else if(z>state.currentZone)dot.classList.add('pending');else dot.classList.add('done');});document.querySelectorAll('.zone-connector').forEach((line,i)=>{const z=i+1;line.classList.toggle('done',!!state.completed[z]||z<state.currentZone);});}
+function setBg(key){document.querySelectorAll('.bg-layer').forEach(l=>{l.classList.toggle('active',l.dataset.bg===key);});}
+function parallax(){const y=window.scrollY*0.15;document.querySelectorAll('.bg-layer.active img').forEach(img=>{img.style.transform='translateY('+y+'px) scale(1.05)';});}
+window.addEventListener('scroll',parallax);
+
+function initRainLayer(){const rl=document.getElementById('rain-layer');if(rl.children.length)return;for(let i=0;i<60;i++){const d=document.createElement('div');d.className='rain-drop';d.style.left=Math.random()*100+'%';d.style.animationDuration=(0.4+Math.random()*0.6)+'s';d.style.animationDelay=Math.random()*2+'s';rl.appendChild(d);}}
+function setZoneEffects(n){document.getElementById('rain-layer').classList.toggle('active',n===2);document.getElementById('water-gradient').classList.toggle('active',n===4);if(n===3){let flash=setInterval(()=>{const el=document.getElementById('lightning-flash');el.classList.add('active');setTimeout(()=>el.classList.remove('active'),150);},4000+Math.random()*3000);state.lightningId=flash;}else if(state.lightningId){clearInterval(state.lightningId);state.lightningId=null;}}
+
+function getAudio(){if(!window.AudioContext&&!window.webkitAudioContext)return null;if(!state.audioCtx){try{state.audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){return null;}}return state.audioCtx;}
+function getVolume(){const v=parseInt(localStorage.getItem('jp_audio_volume')||'70',10)/100;return state.audioEnabled===false?0:v;}
+function loadAudioPrefs(){state.audioEnabled=localStorage.getItem('jp_audio_enabled')!=='false';const vol=localStorage.getItem('jp_audio_volume')||'70';document.getElementById('volume-slider').value=vol;updateMuteBtn();}
+function updateMuteBtn(){const btn=document.getElementById('btn-mute');const on=state.audioEnabled!==false;btn.innerHTML=on?'<i class="fas fa-volume-up"></i>':'<i class="fas fa-volume-mute"></i>';}
+function makeDistCurve(){const n=44100,curve=new Float32Array(n);for(let i=0;i<n;i++){const x=(i*2)/n-1;curve[i]=(Math.PI+x)*Math.tan(Math.PI*x)/(Math.PI*(Math.PI+x));}return curve;}
+
+function startMusic(){const ctx=getAudio();if(!ctx){document.getElementById('audio-fallback').style.display='block';return;}if(state.musicNodes)return;state.audioStarted=true;const master=ctx.createGain();master.gain.value=getVolume();master.connect(ctx.destination);state.masterGain=master;
+const notes=[261.63,311.13,392,523.25,392,311.13];let step=0;
+function playArp(){if(!state.audioStarted)return;const t=ctx.currentTime;const o=ctx.createOscillator();const g=ctx.createGain();o.type='triangle';o.frequency.value=notes[step%notes.length];g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(0.06*getVolume(),t+0.02);g.gain.exponentialRampToValueAtTime(0.001,t+0.4);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.45);step++;setTimeout(playArp,350);}
+function playBass(){if(!state.audioStarted)return;const t=ctx.currentTime;const o=ctx.createOscillator();const g=ctx.createGain();o.type='sine';o.frequency.value=65.41;g.gain.setValueAtTime(0.08*getVolume(),t);g.gain.exponentialRampToValueAtTime(0.001,t+0.8);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.85);setTimeout(playBass,800);}
+function playAmb(){if(!state.audioStarted)return;const t=ctx.currentTime;const o=ctx.createOscillator();const lfo=ctx.createOscillator();const lg=ctx.createGain();const g=ctx.createGain();lfo.frequency.value=0.2;lg.gain.value=30;lfo.connect(lg);lg.connect(o.frequency);o.type='sine';o.frequency.value=220;g.gain.value=0.015*getVolume();o.connect(g);g.connect(master);lfo.start(t);o.start(t);o.stop(t+4);lfo.stop(t+4);setTimeout(playAmb,3800);}
+playArp();playBass();playAmb();
+state.musicNodes={master};state.tensionCheck=setInterval(()=>{const n=state.currentZone;const left=state.timeLeft[n]||999;if(left<60&&left>0&&!state.tensionMode){state.tensionMode=true;state.percInterval=setInterval(()=>{if(!state.audioStarted)return;const t=ctx.currentTime;const o=ctx.createOscillator();const g=ctx.createGain();o.type='square';o.frequency.value=100;g.gain.setValueAtTime(0.04*getVolume(),t);g.gain.exponentialRampToValueAtTime(0.001,t+0.08);o.connect(g);g.connect(master);o.start(t);o.stop(t+0.1);},500);}else if(left>=60&&state.tensionMode){state.tensionMode=false;clearInterval(state.percInterval);}},1000);}
+
+function playRoar(){const ctx=getAudio();if(!ctx)return;const t=ctx.currentTime;const shaper=ctx.createWaveShaper();shaper.curve=makeDistCurve();shaper.oversample='4x';const g=ctx.createGain();g.gain.setValueAtTime(0.3*getVolume(),t);g.gain.exponentialRampToValueAtTime(0.001,t+1.2);[80,120,60].forEach((f,i)=>{const o=ctx.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(f,t);o.frequency.exponentialRampToValueAtTime(f*0.2,t+1);o.connect(shaper);});shaper.connect(g);g.connect(ctx.destination);const o=ctx.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(80,t);o.connect(shaper);o.start(t);o.stop(t+1.2);}
+function playVictory(){const ctx=getAudio();if(!ctx)return;const t=ctx.currentTime;const master=state.masterGain||ctx.destination;[523,659,784,1047,1318].forEach((f,i)=>{const o=ctx.createOscillator();const g=ctx.createGain();o.type='square';o.frequency.value=f;g.gain.setValueAtTime(0,t+i*0.12);g.gain.linearRampToValueAtTime(0.12*getVolume(),t+i*0.12+0.05);g.gain.exponentialRampToValueAtTime(0.001,t+i*0.12+0.5);o.connect(g);g.connect(master);o.start(t+i*0.12);o.stop(t+i*0.12+0.55);});}
+function playChallengeFeedback(kind,ok){const ctx=getAudio();if(!ctx||!getVolume())return;if(ctx.state==='suspended')ctx.resume();const t=ctx.currentTime;const dest=state.masterGain||ctx.destination;const vol=getVolume();const profiles={quiz:{ok:{type:'sine',notes:[523,659,784],gap:0.09,dur:0.32,amp:0.11},bad:{type:'sawtooth',notes:[220,185,155],gap:0.07,dur:0.22,amp:0.09}},'dd-match':{ok:{type:'triangle',notes:[440,554,660],gap:0.08,dur:0.28,amp:0.1},bad:{type:'square',notes:[180,140],gap:0.06,dur:0.18,amp:0.08}},sort:{ok:{type:'sine',notes:[392,494,587,698],gap:0.07,dur:0.26,amp:0.1},bad:{type:'sawtooth',notes:[300,250,200],gap:0.06,dur:0.2,amp:0.085}},match:{ok:{type:'triangle',notes:[349,440,523,659],gap:0.08,dur:0.3,amp:0.1},bad:{type:'square',notes:[233,207],gap:0.05,dur:0.16,amp:0.075}},classify:{ok:{type:'sine',notes:[659,784,988],gap:0.08,dur:0.34,amp:0.11},bad:{type:'sawtooth',notes:[260,220,180],gap:0.06,dur:0.2,amp:0.085}}};const p=(profiles[kind]||profiles.quiz)[ok?'ok':'bad'];p.notes.forEach((f,i)=>{const start=t+i*p.gap;const o=ctx.createOscillator();const g=ctx.createGain();o.type=p.type;o.frequency.value=f;g.gain.setValueAtTime(0,start);g.gain.linearRampToValueAtTime(p.amp*vol,start+0.015);g.gain.exponentialRampToValueAtTime(0.001,start+p.dur);o.connect(g);g.connect(dest);o.start(start);o.stop(start+p.dur+0.02);});}
+
+function addPoints(n,zone){state.points=Math.max(0,state.points+n);if(zone){state.zoneScores[zone]=(state.zoneScores[zone]||0)+n;}updateHUD();save();}
+function fadeMusic(to,dur){if(!state.masterGain)return;const ctx=getAudio();if(!ctx)return;state.masterGain.gain.cancelScheduledValues(ctx.currentTime);state.masterGain.gain.linearRampToValueAtTime(to*getVolume(),ctx.currentTime+dur);}
+function showJourney(text,zoneLabel,cb){const el=document.getElementById('journey-screen');const txt=document.getElementById('journey-text');const zl=document.getElementById('journey-zone');const skipBtn=document.getElementById('journey-skip');txt.textContent='';zl.textContent='';el.classList.add('show');let finished=false;let typingDone=false;let i=0;let iv=null;let iv2=null;const showContinuePrompt=()=>{skipBtn.textContent='▶ Clic para continuar';typingDone=true;};const finish=()=>{if(finished)return;finished=true;if(iv)clearInterval(iv);if(iv2)clearInterval(iv2);el.classList.remove('show');el.onclick=null;skipBtn.onclick=null;if(cb)cb();};const onClick=()=>{if(finished)return;if(!typingDone){if(iv)clearInterval(iv);if(iv2)clearInterval(iv2);txt.textContent=text;zl.textContent=zoneLabel||'';showContinuePrompt();return;}finish();};skipBtn.textContent='[ Clic para mostrar todo el texto ]';el.onclick=onClick;skipBtn.onclick=onClick;iv=setInterval(()=>{txt.textContent+=text[i++];if(i>=text.length){clearInterval(iv);iv=null;if(zoneLabel){let j=0;iv2=setInterval(()=>{zl.textContent+=zoneLabel[j++];if(j>=zoneLabel.length){clearInterval(iv2);iv2=null;showContinuePrompt();}},35);}else showContinuePrompt();}},35);}
+
+function showOfflineBanner(){state.offline=true;document.getElementById('offline-banner').classList.add('show');}
+function validateLoginField(value){if(!value||value.length<2)return 'Mínimo 2 caracteres';if(value.length>30)return 'Máximo 30 caracteres';if(/[0-9]/.test(value))return 'Solo se permiten letras';if(/^[a-záéíóúñ]/.test(value))return 'La primera letra debe ser mayúscula';if(!NAME_RE.test(value))return 'Formato: Primera letra mayúscula, resto minúsculas. Ej: Carlos';return '';}
+function syncZoneResult(zone,points,attempts,completed){const sessionId=sessionStorage.getItem('jp_session_id');const playerId=sessionStorage.getItem('jp_player_id');if(state.offline||!sessionId||!playerId){try{const off=JSON.parse(sessionStorage.getItem('jp_offline_scores')||'[]');off.push({zone,points,attempts,completed,at:new Date().toISOString()});sessionStorage.setItem('jp_offline_scores',JSON.stringify(off));}catch(e){console.error(e);}return;}fetch(`${API_BASE}/api/session/zone`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:parseInt(sessionId,10),player_id:parseInt(playerId,10),zone,points,attempts,completed})}).catch(e=>console.error('syncZoneResult',e));}
+function finishSession(){const sessionId=sessionStorage.getItem('jp_session_id');if(state.offline||!sessionId)return;const zonesDone=Object.keys(state.completed).filter(k=>state.completed[k]).length;fetch(`${API_BASE}/api/session/finish`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({session_id:parseInt(sessionId,10),total_points:state.points,zones_completed:zonesDone,final_quiz_score:state.finalQuizScore||state.zoneScores[6]||0,final_quiz_attempts:state.finalQuizWrongTotal||0})}).catch(e=>console.error('finishSession',e));}
+function startGameSession(playerId){if(state.offline||!playerId)return;fetch(`${API_BASE}/api/session/start`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({player_id:playerId})}).then(r=>r.json()).then(d=>{if(d.session_id)sessionStorage.setItem('jp_session_id',String(d.session_id));}).catch(e=>console.error('startGameSession',e));}
+function beginGameAfterLogin(){document.body.classList.remove('pre-login');document.getElementById('login-screen').classList.add('hidden');sessionStorage.removeItem('jurassicLearning');state.points=0;state.currentZone=1;state.zoneScores={};state.completed={};state.challenges={};state.zoneAttempts={};state.needsRetry={};state.zoneLost={};state.timeLeft={};state.finalQuizInProgress=false;state.finalQuizFinished=false;state.gameStarted=true;setBg('z1');if(state.audioEnabled!==false)startMusic();startZone(1,false,false);}
+function showWelcomeAndStart(data,isNew){const panel=document.getElementById('welcome-panel');const stats=document.getElementById('welcome-stats');if(isNew){document.getElementById('welcome-title').textContent='¡Bienvenido a Isla Nublar, '+data.first_name+'!';stats.style.display='none';panel.classList.add('show');setTimeout(()=>{panel.classList.remove('show');beginGameAfterLogin();},1500);}else{document.getElementById('welcome-title').textContent='¡Bienvenido de vuelta, '+data.first_name+'!';stats.style.display='grid';document.getElementById('ws-games').textContent=data.total_games_played||0;document.getElementById('ws-best').textContent=(data.best_total_score||0)+' pts';document.getElementById('ws-last').textContent=(data.last_session_score||0)+' pts';document.getElementById('ws-zones').textContent=data.zones_completed_total||0;panel.classList.add('show');setTimeout(()=>{panel.classList.remove('show');beginGameAfterLogin();},3000);}}
+function initLogin(){const firstEl=document.getElementById('login-first');const lastEl=document.getElementById('login-last');const submitBtn=document.getElementById('login-submit');const fields=[{el:firstEl,err:document.getElementById('login-first-error')},{el:lastEl,err:document.getElementById('login-last-error')}];const valid={first:false,last:false};const check=()=>{fields.forEach((f,i)=>{const v=f.el.value.trim();const msg=validateLoginField(v);f.err.textContent=msg;f.el.classList.toggle('valid',!msg&&v.length>=2);f.el.classList.toggle('invalid',!!msg&&v.length>0);if(i===0)valid.first=!msg&&v.length>=2;else valid.last=!msg&&v.length>=2;});submitBtn.disabled=!(valid.first&&valid.last);};fields.forEach(f=>{f.el.addEventListener('input',check);});submitBtn.addEventListener('click',async()=>{const fn=firstEl.value.trim();const ln=lastEl.value.trim();if(validateLoginField(fn)||validateLoginField(ln))return;submitBtn.disabled=true;let data=null;let isNew=true;try{const res=await fetch(`${API_BASE}/api/player/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:fn,last_name:ln})});if(!res.ok)throw new Error('login failed');data=await res.json();isNew=!!data.is_new;state.offline=false;}catch(e){console.error('login offline',e);showOfflineBanner();const localId=sessionStorage.getItem('jp_player_id')||String(Date.now());sessionStorage.setItem('jp_player_id',localId);data={player_id:parseInt(localId,10)||localId,first_name:fn,last_name:ln,is_new:true,total_games_played:0,best_total_score:0,last_session_score:0,zones_completed_total:0};isNew=true;state.offline=true;}sessionStorage.setItem('jp_player_id',String(data.player_id));sessionStorage.setItem('jp_player_name',fn+' '+ln);document.getElementById('header-logo').textContent='SUPERVIVIENTE: '+fn+' '+ln;startGameSession(data.player_id);showWelcomeAndStart(data,isNew);});check();}
+
+function updateDinoThreat(n,ratio){const threat=document.getElementById('dino-threat');const url=window.JP_DINOS[n];if(!url)return;const op=0.2+(1-ratio)*0.8;const scale=0.5+(1-ratio)*1.5;let img=threat.querySelector('img');if(!img||threat.dataset.dinoZone!==String(n)){threat.innerHTML='';img=document.createElement('img');img.alt=zoneMeta[n-1].dino;img.referrerPolicy='no-referrer';threat.dataset.dinoZone=String(n);threat.appendChild(img);}if(img.src!==url)img.src=url;img.style.opacity=op;img.style.display='';const svg=threat.querySelector('svg');if(svg)svg.style.opacity=op;threat.classList.add('visible');threat.classList.toggle('capture-mode',ratio<=0);threat.style.transform='scale('+scale+') translateX('+(1-ratio)*-15+'%)';threat.style.opacity=op;}
+window.DINO_SVG_FALLBACK=DINO_SVG;
+setInterval(()=>{document.getElementById('footprint').classList.add('shake');document.body.classList.add('micro-shake');setTimeout(()=>{document.getElementById('footprint').classList.remove('shake');document.body.classList.remove('micro-shake');},150);},8000);
+
+function hasIncompleteChallenges(n){const zone=document.getElementById('zona-'+n);if(!zone)return false;return[...zone.querySelectorAll('.challenge')].some(ch=>!state.challenges[ch.dataset.id]);}
+function updatePhaseButton(n){const zone=document.getElementById('zona-'+n);if(!zone)return;const btn=zone.querySelector('[data-phase-start]');const hint=zone.querySelector('.phase-hint');if(!btn)return;const left=state.timeLeft[n]||0;const isRetry=!!state.needsRetry[n]&&hasIncompleteChallenges(n)&&left>0&&!state.completed[n];if(isRetry){btn.textContent='🔄 Reintentar retos';if(hint)hint.textContent='Tiempo restante: '+fmtTime(left)+' — repasa el contenido y vuelve a intentarlo';}else{btn.textContent='🦕 ¡Entendido! Enfrentar el reto';if(hint)hint.textContent='Al hacer clic, comenzará el temporizador';}}
+function returnToPhaseA(n){clearInterval(state.timerId);clearTimeout(state.quizDelayId);state.quizDelayId=null;state.phase='A';state.capturePending=false;clearTimeout(state.captureGraceId);closeChallengeModals();const zone=document.getElementById('zona-'+n);zone.classList.add('phase-a');state.needsRetry[n]=true;const total=parseInt(zone.dataset.time,10);const left=state.timeLeft[n]||0;updateTimerUI(n,left,total,true);updateDinoThreat(n,Math.max(left/total,0));updatePhaseButton(n);zone.querySelector('.phase-btn-wrap')?.scrollIntoView({behavior:'smooth',block:'center'});}
+function startZone(n,withJourney,shuffle){state.currentZone=n;state.phase='A';state.challengeIdx=0;state.capturePending=false;state.captureActive=false;cancelPendingChallengeActions();state.needsRetry[n]=false;clearInterval(state.timerId);resetPenaltyCount();closeChallengeModals();document.querySelectorAll('.zone').forEach(z=>z.classList.remove('active'));const zone=document.getElementById('zona-'+n);zone.classList.add('active','phase-a');setBg('z'+n);setZoneEffects(n);initRainLayer();const total=parseInt(zone.dataset.time,10);state.timeLeft[n]=total;updateTimerUI(n,total,total);updateDinoThreat(n,1);document.getElementById('dino-threat').classList.remove('capture-mode');updateHUD();updateMap();updatePhaseButton(n);save();buildChallengeQueue(n,!!shuffle,false);}
+function buildChallengeQueue(n,shuffle,onlyIncomplete){const zone=document.getElementById('zona-'+n);let chs=[...zone.querySelectorAll('.challenge')];if(onlyIncomplete)chs=chs.filter(ch=>!state.challenges[ch.dataset.id]);if(shuffle){for(let i=chs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[chs[i],chs[j]]=[chs[j],chs[i]];}}state.challengeQueue=chs;state.challengeIdx=0;}
+function enterPhaseB(n,keepTimer){state.phase='B';state.penaltyCount=0;state.capturePending=false;clearTimeout(state.captureGraceId);updatePenaltyIndicator();const zone=document.getElementById('zona-'+n);zone.classList.remove('phase-a');const total=parseInt(zone.dataset.time,10);if(keepTimer&&state.timeLeft[n]>0){buildChallengeQueue(n,true,true);if(!state.challengeQueue.length){checkZoneComplete(n);return;}resumeTimer(n);}else{state.timeLeft[n]=total;updateTimerUI(n,total,total);buildChallengeQueue(n,true,false);startTimer(n);}presentNextChallenge();}
+function resumeTimer(n){clearInterval(state.timerId);const zone=document.getElementById('zona-'+n);const total=parseInt(zone.dataset.time,10);state.timerId=setInterval(()=>{if(state.capturePending)return;state.timeLeft[n]--;updateTimerUI(n,state.timeLeft[n],total);updateDinoThreat(n,Math.max(state.timeLeft[n]/total,0));updateModalTimerUI();if(state.timeLeft[n]<=0){clearInterval(state.timerId);if(n===6&&state.finalQuizInProgress){closeChallengeModals();completeFinalQuiz();return;}if(!state.capturePending)triggerCapture(n);}},1000);}
+function startTimer(n){const zone=document.getElementById('zona-'+n);const total=parseInt(zone.dataset.time,10);state.timeLeft[n]=total;updateTimerUI(n,total,total);resumeTimer(n);}
+function updateTimerUI(n,left,total,instant){const el=document.getElementById('timer-'+n);const fill=document.getElementById('timer-fill-'+n);if(el)el.textContent=fmtTime(Math.max(left,0));if(fill){if(instant){fill.style.transition='none';fill.style.width=(Math.max(left,0)/total*100)+'%';requestAnimationFrame(()=>{fill.style.transition='width 1s linear,background .5s';});}else fill.style.width=(Math.max(left,0)/total*100)+'%';fill.classList.remove('warn','danger');const ratio=Math.max(left,0)/total;if(ratio<=0.25)fill.classList.add('danger');else if(ratio<=0.5)fill.classList.add('warn');}}
+
+function presentNextChallenge(){if(state.captureActive||state.finalQuizInProgress)return;const ch=state.challengeQueue[state.challengeIdx];if(!ch){if(!checkZoneComplete(state.currentZone)&&hasIncompleteChallenges(state.currentZone))returnToPhaseA(state.currentZone);return;}if(state.challenges[ch.dataset.id]){state.challengeIdx++;presentNextChallenge();return;}
+const type=ch.dataset.type||'quiz';if(type==='quiz')openQuizModal(ch);else openPuzzleModal(ch);}
+
+function openQuizModal(ch){if(state.captureActive)return;const setup=()=>{const body=document.getElementById('challenge-modal-body');const qText=ch.querySelector('p')?.textContent||'';const srcOpts=[...ch.querySelectorAll('.quiz-opt')];const optsHtml=srcOpts.map((btn,i)=>'<button type="button" class="option-btn" data-val="'+btn.dataset.val+'" data-index="'+i+'">'+btn.textContent+'</button>').join('');const gridClass=srcOpts.length===2?'options-grid options-cols-1':'options-grid';body.innerHTML='<div class="quiz-wrap"><p class="question-text">'+qText+'</p><div class="'+gridClass+'" id="quiz-modal-opts">'+optsHtml+'</div></div>';updateChallengeModalHeader(SCORE.quiz);setModalFooterQuiz();openChallengeModal();document.getElementById('challenge-modal').dataset.challengeId=ch.dataset.id;document.getElementById('quiz-modal-opts').querySelectorAll('.option-btn').forEach(btn=>{btn.onclick=()=>handleQuizAnswer(ch,btn);});};withContentFade(setup);}
+
+function showQuizNextButton(ch,ok){const fb=ch.querySelector(ok?'.feedback.ok':'.feedback.bad');showChallengeNextButton(fb?fb.textContent:'Respuesta registrada',()=>{const id=ch.dataset.id;if(ok){if(!state.challenges[id])markChallenge(id,'quiz');}else{addPoints(SCORE.wrong,state.currentZone);save();}advanceToNextChallenge();},ok?'Siguiente reto →':'Continuar →');}
+
+function handleQuizAnswer(ch,btn){if(btn.classList.contains('disabled')||state.captureActive)return;const id=ch.dataset.id;if(state.challenges[id])return;const ans=ch.dataset.answer;const ok=btn.dataset.val===ans;playChallengeFeedback('quiz',ok);document.getElementById('quiz-modal-opts').querySelectorAll('.option-btn').forEach(b=>{b.classList.add('disabled');b.disabled=true;if(b.dataset.val===ans)b.classList.add('correct');else if(b===btn&&!ok)b.classList.add('incorrect');});clearTimeout(state.quizDelayId);state.quizDelayId=null;if(!ok){const hitZero=applyTimePenalty(TIME_PENALTY_QUIZ,'⏱️ -30 segundos');if(hitZero){state.capturePending=false;closeChallengeModals();triggerCapture(state.currentZone);return;}}showQuizNextButton(ch,ok);}
+
+function openPuzzleModal(ch){if(state.captureActive)return;const setup=()=>{const body=document.getElementById('challenge-modal-body');body.innerHTML='';const clone=ch.cloneNode(true);clone.style.display='block';clone.classList.add('puzzle-panel-inner');body.appendChild(clone);updateChallengeModalHeader(SCORE.puzzle);openChallengeModal();document.getElementById('challenge-modal').dataset.challengeId=ch.dataset.id;initPuzzleInModal(clone,ch);};withContentFade(setup);}
+
+function completePuzzleAndOfferNext(ch,id,message){if(state.challenges[id]){showChallengeNextButton(message||ch.querySelector('.feedback.ok')?.textContent||'¡Reto completado!',advanceToNextChallenge);return;}markChallenge(id,'puzzle');document.getElementById('modal-verify-btn').disabled=true;showChallengeNextButton(message||ch.querySelector('.feedback.ok')?.textContent||'¡Reto completado!',advanceToNextChallenge);}
+
+function markChallenge(id,type){if(state.challenges[id])return false;state.challenges[id]=true;const n=state.currentZone;let pts=type==='puzzle'?SCORE.puzzle:SCORE.quiz;const left=state.timeLeft[n]||0;pts+=left*SCORE.timeBonus;addPoints(pts,n);save();checkZoneComplete(n);return true;}
+
+function checkZoneComplete(n){if(n===6)return false;const zone=document.getElementById('zona-'+n);const all=zone.querySelectorAll('.challenge');let done=true;all.forEach(ch=>{if(!state.challenges[ch.dataset.id])done=false;});if(done&&!state.completed[n]){state.completed[n]=true;state.needsRetry[n]=false;clearInterval(state.timerId);syncZoneResult(n,state.zoneScores[n]||0,state.zoneAttempts[n]||1,true);save();playVictory();setTimeout(()=>advanceZone(n),800);return true;}return !!state.completed[n];}
+
+function triggerCapture(n){
+  if(state.captureActive)return;
+  if(n===6)return;
+  state.captureActive=true;
+  cancelPendingChallengeActions();
+  closeChallengeModals();
+  fadeMusic(0,0.3);
+  updateDinoThreat(n,0);
+  document.getElementById('dino-threat').classList.add('capture-mode');
+  document.body.classList.remove('micro-shake');
+  document.body.classList.add('capture-shake');
+  setTimeout(()=>document.body.classList.remove('capture-shake'),900);
+  playRoar();
+  setTimeout(()=>{document.getElementById('capture-blackout').classList.add('show');},500);
+  setTimeout(()=>{
+    addPoints(SCORE.caught,n);
+    syncZoneResult(n,state.zoneScores[n]||0,state.zoneAttempts[n]||0,false);
+    state.zoneAttempts[n]=(state.zoneAttempts[n]||0)+1;
+    saveAttempts();updateMap();
+    const attemptNum=state.zoneAttempts[n];
+    const overlay=document.getElementById('capture-overlay');
+    document.getElementById('capture-title').textContent='CAPTURADO';
+    document.getElementById('capture-title').classList.add('glitch');
+    document.getElementById('capture-narrative').textContent=zoneMeta[n-1].capture;
+    document.getElementById('capture-points-lost').textContent='-50 pts';
+    document.getElementById('capture-points-remain').textContent='Puntos actuales: '+state.points+' pts';
+    document.getElementById('capture-attempt').textContent='Intento #'+attemptNum+' en esta zona';
+    let tip='';
+    if(attemptNum>=5)tip='💡 Tip: Lee la cita del científico con atención.';
+    else if(attemptNum>=3)tip='Estudia bien el contenido antes de continuar...';
+    document.getElementById('capture-tip').textContent=tip;
+    const img=document.getElementById('capture-dino-img');
+    img.referrerPolicy='no-referrer';
+    img.src=window.JP_DINOS[n];img.style.display='block';
+    overlay.classList.add('show');
+    state.captureZone=n;
+    document.getElementById('btn-capture-retry').onclick=()=>{
+      overlay.classList.remove('show');
+      document.getElementById('capture-blackout').classList.remove('show');
+      document.getElementById('capture-title').classList.remove('glitch');
+      document.getElementById('dino-threat').classList.remove('capture-mode');
+      document.body.classList.remove('capture-shake');
+      state.captureActive=false;
+      Object.keys(state.challenges).forEach(k=>{if(k.startsWith('z'+n))delete state.challenges[k];});
+      startZone(n,false,true);
+      fadeMusic(1,0.5);
+    };
+  },1200);
+}
+
+function advanceZone(n){if(n>=ZONES){setBg('final');showFinal();return;}showJourney(zoneMeta[n-1].journey,zoneMeta[n-1].journeyNext,()=>startZone(n+1,false,false));}
+
+function shuffleArray(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startFinalQuiz(n){if(state.completed[6]||state.finalQuizFinished)return;if(!window.FINAL_QUESTIONS||window.FINAL_QUESTIONS.length<FINAL_QUIZ_COUNT){alert('Error al cargar el banco de preguntas. Verifica que questions-final.js esté en la misma carpeta.');return;}const startBtn=document.querySelector('[data-final-start="6"]');if(startBtn)startBtn.disabled=true;state.currentZone=n;state.phase='B';state.finalQuizInProgress=true;state.finalQuizIdx=0;state.finalQuizScore=0;state.finalQuizWrongTotal=0;state.penaltyCount=0;state.capturePending=false;clearTimeout(state.captureGraceId);resetPenaltyCount();const zone=document.getElementById('zona-'+n);zone.classList.remove('phase-a');zone.classList.add('active');document.querySelectorAll('.zone').forEach(z=>{if(z.id!=='zona-'+n)z.classList.remove('active');});setBg('z6');setZoneEffects(n);const total=parseInt(zone.dataset.time,10);state.timeLeft[n]=total;updateTimerUI(n,total,total);updateDinoThreat(n,1);updateHUD();state.finalQuizQueue=shuffleArray(window.FINAL_QUESTIONS).slice(0,FINAL_QUIZ_COUNT);startTimer(n);presentFinalQuestion();}
+function presentFinalQuestion(){if(!state.finalQuizInProgress)return;const q=state.finalQuizQueue[state.finalQuizIdx];if(!q){completeFinalQuiz();return;}const setup=()=>{const body=document.getElementById('challenge-modal-body');const optsHtml=q.options.map((opt,i)=>'<button type="button" class="option-btn" data-index="'+i+'">'+opt+'</button>').join('');body.innerHTML='<div class="quiz-wrap"><p class="question-text">'+q.question+'</p><div class="options-grid" id="final-quiz-opts">'+optsHtml+'</div><p class="feedback" id="final-quiz-fb" style="display:none;margin-top:16px"></p></div>';document.getElementById('modal-reto-val').textContent=(state.finalQuizIdx+1)+' de '+FINAL_QUIZ_COUNT;document.getElementById('modal-points-val').textContent=SCORE.finalFirst+' pts';document.getElementById('modal-threat-label').textContent='⚠ AMENAZA ACTIVA: Pterosaurio';updatePenaltyIndicator();updateModalTimerUI();setModalFooterQuiz();openChallengeModal();document.getElementById('final-quiz-opts').querySelectorAll('.option-btn').forEach(btn=>{btn.onclick=()=>handleFinalQuizAnswer(q,btn);});};withContentFade(setup);}
+function handleFinalQuizAnswer(q,btn){if(btn.classList.contains('disabled')||!state.finalQuizInProgress)return;const ok=parseInt(btn.dataset.index,10)===q.correct;playChallengeFeedback('quiz',ok);document.getElementById('final-quiz-opts').querySelectorAll('.option-btn').forEach(b=>{b.classList.add('disabled');b.disabled=true;if(parseInt(b.dataset.index,10)===q.correct)b.classList.add('correct');else if(b===btn&&!ok)b.classList.add('incorrect');});const advance=()=>{closeChallengeModals();state.finalQuizIdx++;presentFinalQuestion();};if(ok){const pts=SCORE.finalFirst;state.finalQuizScore+=pts;state.zoneScores[6]=(state.zoneScores[6]||0)+pts;state.points+=pts;updateHUD();save();const fb=document.getElementById('final-quiz-fb');if(fb){fb.style.display='block';fb.className='feedback ok show';fb.textContent=q.explanation;}showChallengeNextButton('¡Correcto! +'+pts+' pts',advance,'Siguiente pregunta →');}else{state.finalQuizWrongTotal++;const hitZero=applyTimePenalty(TIME_PENALTY_FINAL,'⏱️ -45 segundos');const fb=document.getElementById('final-quiz-fb');if(fb){fb.style.display='block';fb.className='feedback bad show';fb.textContent=(q.explanation?'Incorrecto. '+q.explanation:'Incorrecto. Sin puntos en esta pregunta.');}if(hitZero){completeFinalQuiz();return;}showChallengeNextButton('Incorrecto — pasas a la siguiente',advance,'Siguiente pregunta →');}}
+function completeFinalQuiz(){if(state.finalQuizFinished)return;state.finalQuizFinished=true;state.finalQuizInProgress=false;state.completed[6]=true;clearInterval(state.timerId);syncZoneResult(6,state.zoneScores[6]||0,state.finalQuizWrongTotal||0,true);save();closeChallengeModals();document.getElementById('dino-threat').classList.remove('visible');const startBtn=document.querySelector('[data-final-start="6"]');if(startBtn){startBtn.disabled=true;startBtn.textContent='✓ Prueba final completada';}playVictory();finishSession();setTimeout(()=>{setBg('final');showFinal();},800);}
+
+function initPuzzleInModal(clone,orig){const kind=orig.dataset.challenge;const id=orig.dataset.id;
+if(kind==='dd-match')initDD(clone,id);else if(kind==='sort')initSort(clone,id);else if(kind==='match')initMatch(clone,id);else if(kind==='classify')initClassify(clone,id);}
+
+function initDD(container,id){const ch=container;const pairs=JSON.parse(ch.dataset.pairs);const dd=container.querySelector('.dd-zone');const terms=Object.keys(pairs).sort(()=>Math.random()-0.5);const defs=Object.values(pairs).sort(()=>Math.random()-0.5);const instr=ch.querySelector('p')?.textContent||ch.querySelector('h4')?.textContent||'';let html='<p class="puzzle-instruction">'+instr+'</p><div class="puzzle-dd-wrap"><div class="drop-zones">';defs.forEach((d,i)=>{html+='<div class="dd-target-wrap"><div class="dd-label">Definición '+(i+1)+'</div><div class="drop-zone" data-answer="'+d.replace(/"/g,'&quot;')+'" data-drop></div><p class="dd-def-text">'+d+'</p></div>';});html+='</div><div class="drag-terms" id="drag-terms-pool">';terms.forEach(t=>{html+='<div class="drag-term" draggable="true" data-term="'+t.replace(/"/g,'&quot;')+'">'+t+'</div>';});html+='</div></div>';dd.innerHTML=html;setModalFooterPuzzle();updatePuzzleProgress(0,defs.length);const verifyBtn=document.getElementById('modal-verify-btn');verifyBtn.textContent='Verificar respuestas';const termsPool=dd.querySelector('.drag-terms');const syncDd=()=>{const filled=dd.querySelectorAll('.drop-zone .drag-term').length;updatePuzzleProgress(filled,defs.length);verifyBtn.disabled=filled<defs.length;if(termsPool)termsPool.classList.toggle('drag-terms-col-hidden',termsPool.children.length===0);};setupDragDrop(dd,pairs,syncDd);syncDd();verifyBtn.onclick=()=>{if(state.challenges[id]){completePuzzleAndOfferNext(ch,id);return;}let wrong=[];dd.querySelectorAll('.drop-zone').forEach(slot=>{const term=slot.querySelector('.drag-term');slot.classList.remove('correct-slot','wrong-slot');if(!term||pairs[term.dataset.term]!==slot.dataset.answer){wrong.push(slot);slot.classList.add('wrong-slot');}else slot.classList.add('correct-slot');});if(wrong.length===0){playChallengeFeedback('dd-match',true);completePuzzleAndOfferNext(ch,id);return;}playChallengeFeedback('dd-match',false);verifyBtn.disabled=true;let hitZero=false;wrong.forEach(slot=>{if(applyTimePenalty(TIME_PENALTY_PUZZLE,'⏱️ -15 segundos'))hitZero=true;const term=slot.querySelector('.drag-term');if(term){termsPool.appendChild(term);slot.classList.remove('filled');}});setTimeout(()=>{wrong.forEach(s=>s.classList.remove('wrong-slot','correct-slot'));syncDd();if(hitZero)triggerCaptureAfterGrace();},2000);};}
+
+function setupDragDrop(root,pairs,onChange){let dragged=null;const termsPool=root.querySelector('.drag-terms');root.querySelectorAll('.drag-term').forEach(item=>{item.addEventListener('dragstart',()=>{dragged=item;item.classList.add('dragging');});item.addEventListener('dragend',()=>{item.classList.remove('dragging');dragged=null;});});root.querySelectorAll('[data-drop]').forEach(slot=>{slot.addEventListener('dragover',e=>e.preventDefault());slot.addEventListener('drop',e=>{e.preventDefault();if(!dragged||slot.querySelector('.drag-term'))return;if(pairs&&pairs[dragged.dataset.term]!==slot.dataset.answer){playChallengeFeedback('dd-match',false);const hitZero=applyTimePenalty(TIME_PENALTY_PUZZLE,'⏱️ -15 segundos');dragged.classList.add('piece-shake');termsPool.appendChild(dragged);slot.classList.remove('filled');slot.classList.add('slot-error');setTimeout(()=>slot.classList.remove('slot-error'),500);setTimeout(()=>dragged.classList.remove('piece-shake'),400);if(onChange)onChange();if(hitZero)triggerCaptureAfterGrace();dragged=null;return;}slot.appendChild(dragged);slot.classList.add('filled');dragged=null;if(onChange)onChange();});});}
+
+function initSort(container,id){const ch=container;const order=ch.dataset.order.split(',');const list=container.querySelector('.sort-list');const instr=ch.querySelector('p')?.textContent||ch.querySelector('h4')?.textContent||'';const wrap=list.parentElement;wrap.innerHTML='<p class="puzzle-instruction">'+instr+'</p><div class="puzzle-sort-grid"><div class="puzzle-sort-main"><div class="sort-list"></div></div></div>';const sortList=wrap.querySelector('.sort-list');const shuffled=[...order].sort(()=>Math.random()-0.5);sortList.innerHTML=shuffled.map(item=>'<div class="sort-item" draggable="true" data-item="'+item.replace(/"/g,'&quot;')+'"><span>'+item+'</span><div class="sort-arrows"><button type="button" data-dir="up" aria-label="Subir">▲</button><button type="button" data-dir="down" aria-label="Bajar">▼</button></div></div>').join('');setupSortable(sortList);sortList.querySelectorAll('.sort-arrows button').forEach(btn=>{btn.onclick=e=>{e.stopPropagation();const item=btn.closest('.sort-item');if(btn.dataset.dir==='up'&&item.previousElementSibling)sortList.insertBefore(item,item.previousElementSibling);if(btn.dataset.dir==='down'&&item.nextElementSibling)sortList.insertBefore(item.nextElementSibling,item);};});setModalFooterPuzzle();updatePuzzleProgress(null,null);const verifyBtn=document.getElementById('modal-verify-btn');verifyBtn.disabled=false;verifyBtn.onclick=()=>{if(state.challenges[id]){completePuzzleAndOfferNext(ch,id);return;}const items=[...sortList.querySelectorAll('.sort-item')];let wrongItems=[];items.forEach((el,i)=>{el.classList.remove('sort-wrong','sort-correct');if(el.dataset.item!==order[i])wrongItems.push(el);else el.classList.add('sort-correct');});if(wrongItems.length===0){playChallengeFeedback('sort',true);completePuzzleAndOfferNext(ch,id);}else{playChallengeFeedback('sort',false);verifyBtn.disabled=true;let hitZero=false;wrongItems.forEach(el=>{if(applyTimePenalty(TIME_PENALTY_PUZZLE,'⏱️ -15 segundos'))hitZero=true;el.classList.add('sort-wrong','piece-shake');setTimeout(()=>el.classList.remove('piece-shake'),400);});setTimeout(()=>{wrongItems.forEach(el=>el.classList.remove('sort-wrong','sort-correct'));verifyBtn.disabled=false;if(hitZero)triggerCaptureAfterGrace();},2000);}};}
+
+function setupSortable(list){let dragEl=null;list.querySelectorAll('.sort-item').forEach(item=>{item.addEventListener('dragstart',()=>{dragEl=item;});item.addEventListener('dragover',e=>{e.preventDefault();const after=getAfter(list,e.clientY);if(after)list.insertBefore(dragEl,after);else list.appendChild(dragEl);});});}
+function getAfter(container,y){const els=[...container.querySelectorAll('.sort-item:not(.dragging)')];return els.reduce((closest,child)=>{const box=child.getBoundingClientRect();const offset=y-box.top-box.height/2;return offset<0&&offset>closest.offset?{offset,element:child}:closest;},{offset:Number.NEGATIVE_INFINITY}).element;}
+
+function initMatch(container,id){const ch=container;const pairs=JSON.parse(ch.dataset.pairs);const keys=Object.keys(pairs);const vals=Object.values(pairs);setModalFooterMatch();updatePuzzleProgress(0,keys.length);const instr=ch.querySelector('p')?.textContent||'';const gridWrap=container.querySelector('.match-grid');if(instr){const p=document.createElement('p');p.className='puzzle-instruction';p.textContent=instr;gridWrap.parentElement.insertBefore(p,gridWrap);}const cols=container.querySelectorAll('.match-col');const left=cols[0];const right=cols[1];const canvas=container.querySelector('canvas');left.innerHTML='';right.innerHTML='';const shuffledVals=[...vals].sort(()=>Math.random()-0.5);keys.forEach(k=>{left.innerHTML+='<div class="match-node" data-side="left" data-key="'+k.replace(/"/g,'&quot;')+'">'+k+'</div>';});shuffledVals.forEach(v=>{right.innerHTML+='<div class="match-node" data-side="right" data-val="'+v.replace(/"/g,'&quot;')+'">'+v+'</div>';});let sel=null;const matched=new Set();const ctx=canvas.getContext('2d');function drawLines(){const grid=canvas.parentElement;canvas.width=grid.offsetWidth;canvas.height=grid.offsetHeight;ctx.clearRect(0,0,canvas.width,canvas.height);matched.forEach(key=>{const l=left.querySelector('[data-key="'+key+'"]');const v=pairs[key];const r=[...right.querySelectorAll('.match-node')].find(n=>n.dataset.val===v);if(l&&r){const lr=l.getBoundingClientRect();const rr=r.getBoundingClientRect();const gr=grid.getBoundingClientRect();ctx.strokeStyle='#4CAF50';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(lr.right-gr.left,lr.top+lr.height/2-gr.top);ctx.lineTo(rr.left-gr.left,rr.top+rr.height/2-gr.top);ctx.stroke();}});}
+left.addEventListener('click',e=>{const n=e.target.closest('.match-node');if(!n||n.classList.contains('matched'))return;left.querySelectorAll('.match-node').forEach(x=>x.classList.remove('selected'));n.classList.add('selected');sel={el:n,key:n.dataset.key};});
+right.addEventListener('click',e=>{const n=e.target.closest('.match-node');if(!n||n.classList.contains('matched')||!sel)return;if(pairs[sel.key]===n.dataset.val){sel.el.classList.add('matched');n.classList.add('matched');matched.add(sel.key);drawLines();updatePuzzleProgress(matched.size,keys.length);if(matched.size===keys.length){playChallengeFeedback('match',true);completePuzzleAndOfferNext(container,id);}}else{playChallengeFeedback('match',false);}sel=null;left.querySelectorAll('.match-node').forEach(x=>x.classList.remove('selected'));});}
+
+function initClassify(container,id){const ch=container;const science=ch.dataset.science.split(',');const myth=ch.dataset.myth.split(',');const all=[...science,...myth].sort(()=>Math.random()-0.5);const pool=container.querySelector('.classify-pool');const instr=ch.querySelector('p')?.textContent||'';if(instr){const p=document.createElement('p');p.className='puzzle-instruction';p.textContent=instr;container.insertBefore(p,pool);}pool.innerHTML=all.map(s=>'<div class="dd-item" draggable="true" data-strat="'+s.replace(/"/g,'&quot;')+'">'+s+'</div>').join('');setupClassifyDnD(container);setModalFooterPuzzle();updatePuzzleProgress(0,8);const verifyBtn=document.getElementById('modal-verify-btn');verifyBtn.textContent='Verificar respuestas';const sync=()=>{const placed=container.querySelectorAll('.classify-col .dd-item').length;updatePuzzleProgress(placed,8);verifyBtn.disabled=placed<8;};sync();container.querySelectorAll('.classify-col, .classify-pool').forEach(z=>{z.addEventListener('drop',()=>setTimeout(sync,0));});verifyBtn.onclick=()=>{if(state.challenges[id]){completePuzzleAndOfferNext(ch,id);return;}let wrong=0;container.querySelectorAll('.classify-col .dd-item').forEach(i=>{i.classList.remove('classify-wrong','classify-correct');const inScience=science.includes(i.dataset.strat);const inMyth=myth.includes(i.dataset.strat);const col=i.closest('.classify-col');const correct=(col.classList.contains('science')&&inScience)||(col.classList.contains('myth')&&inMyth);if(correct)i.classList.add('classify-correct');else{wrong++;i.classList.add('classify-wrong');}});if(wrong===0&&container.querySelectorAll('.classify-col .dd-item').length>=8){playChallengeFeedback('classify',true);completePuzzleAndOfferNext(ch,id);}else{playChallengeFeedback('classify',false);verifyBtn.disabled=true;let hitZero=false;for(let i=0;i<wrong;i++){if(applyTimePenalty(TIME_PENALTY_PUZZLE,'⏱️ -15 segundos'))hitZero=true;}setTimeout(()=>{container.querySelectorAll('.classify-col .dd-item').forEach(i=>i.classList.remove('classify-wrong','classify-correct'));verifyBtn.disabled=false;sync();if(hitZero)triggerCaptureAfterGrace();},2000);}};}
+function setupClassifyDnD(root){let dragged=null;root.querySelectorAll('.dd-item').forEach(item=>{item.draggable=true;item.ondragstart=()=>{dragged=item;item.classList.add('dragging');};item.ondragend=()=>item.classList.remove('dragging');});[root.querySelector('.classify-pool'),...root.querySelectorAll('.classify-col')].forEach(zone=>{zone.addEventListener('dragover',e=>e.preventDefault());zone.addEventListener('drop',e=>{e.preventDefault();if(dragged){zone.appendChild(dragged);dragged=null;}});});}
+
+document.querySelectorAll('[data-phase-start]').forEach(btn=>{btn.addEventListener('click',()=>{const n=parseInt(btn.dataset.phaseStart,10);enterPhaseB(n,!!state.needsRetry[n]);});});
+document.querySelectorAll('[data-final-start]').forEach(btn=>{btn.addEventListener('click',()=>{startFinalQuiz(parseInt(btn.dataset.finalStart,10));});});
+
+function showFinal(){clearInterval(state.timerId);document.getElementById('dino-threat').classList.remove('visible');document.querySelectorAll('.zone').forEach(z=>z.classList.remove('active'));document.getElementById('final-screen').classList.add('show');setBg('final');playVictory();document.getElementById('final-total').textContent=state.points;let br='';for(let i=1;i<=ZONES;i++)br+='<div>Zona '+i+': '+(state.zoneScores[i]||0)+' pts</div>';document.getElementById('score-breakdown').innerHTML=br;const msg=state.points>=2500?'¡Eres el mejor paleontólogo-neurocientífico de la isla!':state.points>=1500?'Hammond aprobaría tu actuación. ¡Buen trabajo!':'El Dr. Malcolm dice que necesitas más práctica...';document.getElementById('final-msg').textContent=msg;const lb=JSON.parse(localStorage.getItem('jurassicLB')||'[]');lb.unshift({score:state.points,date:new Date().toLocaleString('es-ES')});localStorage.setItem('jurassicLB',JSON.stringify(lb.slice(0,5)));renderLB();updateMap();}
+
+function renderLB(){const lb=JSON.parse(localStorage.getItem('jurassicLB')||'[]');document.getElementById('leaderboard-body').innerHTML=lb.map((e,i)=>'<tr><td>'+(i+1)+'</td><td>'+e.score+'</td><td>'+e.date+'</td></tr>').join('')||'<tr><td colspan="3">Sin intentos previos</td></tr>';}
+
+function updateMap(){document.querySelectorAll('.map-zone-card').forEach(card=>{const z=parseInt(card.dataset.zone,10);const badge=card.querySelector('.map-status-badge');const stats=card.querySelector('.map-stats');const att=state.zoneAttempts[z]||0;const pts=state.zoneScores[z]||0;card.classList.toggle('active',z===state.currentZone);if(state.completed[z]){badge.className='map-status-badge done';badge.textContent='✓ COMPLETADA';stats.textContent='⭐ '+pts+' pts  |  🔄 '+att+' intentos';}else if(state.zoneLost&&state.zoneLost[z]){badge.className='map-status-badge lost';badge.textContent='✗ FALLIDA';stats.textContent='⭐ '+pts+' pts  |  🔄 '+att+' intentos';}else if(z===state.currentZone){badge.className='map-status-badge progress';badge.innerHTML='<span class="pulse-dot">●</span> EN CURSO';stats.textContent='⭐ '+pts+' pts  |  🔄 '+att+' intentos';}else if(z>state.currentZone){badge.className='map-status-badge locked';badge.textContent='🔒 BLOQUEADA';stats.textContent='⭐ — pts  |  🔒 Bloqueada';}else{badge.className='map-status-badge done';badge.textContent='✓ COMPLETADA';stats.textContent='⭐ '+pts+' pts  |  🔄 '+att+' intentos';}});const doneLine=document.getElementById('map-route-done');const progress=Math.max(0,Math.min(state.currentZone-1+(state.completed[state.currentZone]?1:0),ZONES-1));const x2=50+progress*(450/(ZONES-1));doneLine.setAttribute('x2',x2);document.querySelectorAll('#map-route-line circle').forEach(c=>{const n=parseInt(c.dataset.node,10);if(state.completed[n])c.setAttribute('fill','#4ade4a');else if(n===state.currentZone)c.setAttribute('fill','#ffc107');else if(n>state.currentZone)c.setAttribute('fill','#666');else c.setAttribute('fill','#4ade4a');});}
+
+function drawStatsChart(){const c=document.getElementById('stats-canvas');const ctx=c.getContext('2d');ctx.clearRect(0,0,c.width,c.height);const scores=[1,2,3,4,5,6].map(i=>state.zoneScores[i]||0);const max=Math.max(...scores,100);const bw=50,gap=30,start=40;scores.forEach((s,i)=>{const h=(s/max)*(c.height-80);const x=start+i*(bw+gap);ctx.fillStyle='#4CAF50';ctx.fillRect(x,c.height-40-h,bw,h);ctx.fillStyle='#ffc107';ctx.fillText('Z'+(i+1),x+12,c.height-15);ctx.fillStyle='#e8f5e9';ctx.fillText(s+'pts',x,c.height-45-h);});}
+
+function loadLeaderboard(){const body=document.getElementById('lb-body');body.innerHTML='<div class="lb-status">Cargando datos...</div>';if(state.offline){body.innerHTML='<div class="lb-status">No se pudo conectar al servidor<br><button class="btn btn-sm" type="button" id="lb-retry">Reintentar</button></div>';document.getElementById('lb-retry').onclick=loadLeaderboard;return;}fetch(`${API_BASE}/api/leaderboard`).then(r=>{if(!r.ok)throw new Error('fail');return r.json();}).then(rows=>{let html='<table class="lb-table"><thead><tr><th>#</th><th>Nombre</th><th>Apellido</th><th>Mejor Puntaje</th><th>Partidas</th></tr></thead><tbody>';const myId=sessionStorage.getItem('jp_player_id');let myRank=null;rows.forEach(r=>{const isMe=myId&&String(r.player_id)===String(myId);if(isMe)myRank=r.rank;html+='<tr'+(isMe?' class="lb-you"':'')+'><td>'+r.rank+'</td><td>'+r.first_name+'</td><td>'+r.last_name+'</td><td>'+r.best_score+'</td><td>'+r.total_games+'</td></tr>';});html+='</tbody></table>';body.innerHTML=html;if(myId&&!myRank){fetch(`${API_BASE}/api/player/${myId}/history`).then(r=>r.ok?r.json():null).then(hist=>{if(!hist)return;const finished=(hist.sessions||[]).filter(s=>s.finished_at);const best=finished.reduce((m,s)=>Math.max(m,s.total_points||0),0);const games=finished.length;const rankGuess=rows.filter(r=>r.best_score>best).length+1;body.innerHTML+=`<div class="lb-your-row">TU POSICIÓN: #${rankGuess>10?rankGuess:'—'} — Mejor puntaje: ${best} pts | Partidas: ${games}</div>`;}).catch(()=>{});}}).catch(()=>{body.innerHTML='<div class="lb-status">No se pudo conectar al servidor<br><button class="btn btn-sm" type="button" id="lb-retry">Reintentar</button></div>';document.getElementById('lb-retry').onclick=loadLeaderboard;});}
+
+function resetGame(){sessionStorage.removeItem('jurassicLearning');location.reload();}
+
+document.getElementById('btn-map').addEventListener('click',()=>{updateMap();document.getElementById('map-modal').classList.add('open');});
+document.getElementById('btn-leaderboard').addEventListener('click',()=>{document.getElementById('lb-modal').classList.add('open');loadLeaderboard();});
+document.getElementById('lb-refresh').addEventListener('click',loadLeaderboard);
+document.querySelectorAll('.modal-close').forEach(b=>b.addEventListener('click',()=>document.getElementById(b.dataset.close+'-modal').classList.remove('open')));
+document.getElementById('btn-restart').addEventListener('click',resetGame);
+document.getElementById('btn-stats').addEventListener('click',()=>{drawStatsChart();document.getElementById('stats-modal').classList.add('open');});
+document.getElementById('btn-mute').addEventListener('click',()=>{state.audioEnabled=state.audioEnabled===false?true:false;localStorage.setItem('jp_audio_enabled',state.audioEnabled);updateMuteBtn();const ctx=getAudio();if(state.masterGain&&ctx){state.masterGain.gain.cancelScheduledValues(ctx.currentTime);state.masterGain.gain.linearRampToValueAtTime(getVolume(),ctx.currentTime+0.5);}});
+document.getElementById('volume-slider').addEventListener('input',e=>{localStorage.setItem('jp_audio_volume',e.target.value);if(state.masterGain)state.masterGain.gain.value=getVolume();});
+document.addEventListener('keydown',e=>{state.nedryBuffer=(state.nedryBuffer+e.key).slice(-5).toUpperCase();if(state.nedryBuffer.endsWith('NEDRY')){state.nedryBuffer='';const ov=document.getElementById('nedry-overlay');ov.classList.add('show');setTimeout(()=>ov.classList.remove('show'),3000);}});
+
+loadAudioPrefs();initLogin();updateHUD();updateMap();for(let i=1;i<=ZONES;i++)updatePhaseButton(i);
+if(!getAudio()){const fb=document.getElementById('audio-fallback');fb.style.display='block';setTimeout(()=>{fb.style.display='none';},2000);}
+})();
+</script>
+<script src="questions-final.js"></script>
+</body></html>
